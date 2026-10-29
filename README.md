@@ -66,9 +66,14 @@ Run `gleam run -m ghtml` and boom — you get a perfectly formatted, type-safe G
 
 **1. Install**
 
-```sh
-gleam add ghtml@1
+This fork is not on Hex (`gleam add ghtml` installs the original package). Add it as a Git dependency in `gleam.toml`:
+
+```toml
+[dev-dependencies]
+ghtml = { git = "https://github.com/yarox/ghtml", ref = "v0.2.0" }
 ```
+
+See [CHANGELOG.md](CHANGELOG.md) for what the fork adds and changes.
 
 **2. Create a template**
 
