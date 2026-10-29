@@ -98,7 +98,8 @@ All shared types are defined here:
 - **Position/Span** - Source locations for error reporting
 - **Token** - Lexer output (Import, Params, HtmlOpen, IfStart, etc.)
 - **Attribute** - Attribute variants (StaticAttribute, DynamicAttribute, EventAttribute with modifiers: List(String), BooleanAttribute)
-- **Node** - AST nodes (Element, TextNode, ExprNode, IfNode, EachNode, CaseNode, Fragment)
+- **Node** - AST nodes (Element, TextNode, ExprNode, IfNode, EachNode, CaseNode, Fragment, EmbedNode)
+- **EmbedKind** - What an embed directive inserts (EmbedElement for `{@element}`, EmbedElements for `{@elements}`)
 - **Template** - Final parsed result with imports, params, and body nodes
 - **Target** - Code generation target backend (currently: Lustre). Includes `target_from_string()` and `valid_target_names()`.
 
@@ -133,6 +134,7 @@ Thin dispatcher that routes code generation to the appropriate target:
 
 ### `src/ghtml/codegen_utils.gleam` - Shared Codegen Utilities
 Target-agnostic helpers used by all code generation backends:
+- Tree walking: `any_node(nodes, predicate)` visits every node; all `template_*` analysis helpers are built on it, so a new Node variant only needs a case in `child_nodes()`
 - Template analysis: `template_has_each()`, `template_needs_none()`, etc.
 - String utilities: `escape_string()`, `normalize_whitespace()`, `is_blank()`
 - HTML helpers: `is_custom_element()`, `is_void_element()`
@@ -202,6 +204,9 @@ Utilities for E2E testing:
     {:Member(since)}
       <span>Member since {int.to_string(since)}</span>
   {/case}
+
+  <aside>{@element sidebar}</aside>
+  {@elements children}
 
   <button @click={on_click()}>Click me</button>
   <div @on:dragover.prevent={on_dragover()}>Drop here</div>

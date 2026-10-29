@@ -399,7 +399,8 @@ e2e-regen:
                    test/fixtures/control_flow/full.ghtml \
                    test/fixtures/fragments/multiple_roots.ghtml \
                    test/fixtures/custom_elements/web_components.ghtml \
-                   test/fixtures/edge_cases/special.ghtml; do
+                   test/fixtures/edge_cases/special.ghtml \
+                   test/fixtures/composition/layout.ghtml; do
         echo "  Processing: $fixture"
         # The generator outputs alongside source, so we need to process after
     done
@@ -415,6 +416,7 @@ e2e-regen:
     cp test/fixtures/fragments/multiple_roots.gleam test/e2e/lustre/generated/fragments.gleam 2>/dev/null || true
     cp test/fixtures/custom_elements/web_components.gleam test/e2e/lustre/generated/custom_elements.gleam 2>/dev/null || true
     cp test/fixtures/edge_cases/special.gleam test/e2e/lustre/generated/edge_cases.gleam 2>/dev/null || true
+    cp test/fixtures/composition/layout.gleam test/e2e/lustre/generated/composition.gleam 2>/dev/null || true
 
     # Clean up generated files from fixtures directory
     rm -f test/fixtures/simple/basic.gleam
@@ -423,6 +425,7 @@ e2e-regen:
     rm -f test/fixtures/fragments/multiple_roots.gleam
     rm -f test/fixtures/custom_elements/web_components.gleam
     rm -f test/fixtures/edge_cases/special.gleam
+    rm -f test/fixtures/composition/layout.gleam
 
     # Fix import paths for generated modules (types -> e2e/lustre/generated/types)
     # Use platform-specific sed syntax (macOS vs Linux)

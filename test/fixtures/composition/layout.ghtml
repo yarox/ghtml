@@ -1,0 +1,13 @@
+@params(
+  title: String,
+  sidebar: Element(msg),
+  children: List(Element(msg)),
+)
+
+<div class="layout">
+  <aside>{@element sidebar}</aside>
+  <main>
+    <h1>{title}</h1>
+    {@elements children}
+  </main>
+</div>

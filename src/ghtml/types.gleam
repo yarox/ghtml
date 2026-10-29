@@ -49,6 +49,15 @@ pub type Token {
   CasePattern(pattern: String, span: Span)
   CaseEnd(span: Span)
   Comment(span: Span)
+  Embed(kind: EmbedKind, content: String, span: Span)
+}
+
+/// What an embed directive (`{@...}`) inserts into the element tree
+pub type EmbedKind {
+  /// `{@element expr}`: `expr` is a single `Element(msg)`
+  EmbedElement
+  /// `{@elements expr}`: `expr` is a `List(Element(msg))`
+  EmbedElements
 }
 
 /// AST Node representing parsed template structure
@@ -71,6 +80,7 @@ pub type Node {
   )
   CaseNode(expr: String, branches: List(CaseBranch), span: Span)
   Fragment(children: List(Node), span: Span)
+  EmbedNode(kind: EmbedKind, expr: String, span: Span)
 }
 
 /// A branch in a case expression

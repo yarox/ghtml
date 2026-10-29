@@ -6,6 +6,7 @@
 
 import e2e/lustre/generated/attributes
 import e2e/lustre/generated/basic
+import e2e/lustre/generated/composition
 import e2e/lustre/generated/control_flow
 import e2e/lustre/generated/custom_elements
 import e2e/lustre/generated/edge_cases
@@ -14,6 +15,7 @@ import e2e/lustre/generated/types.{Active, Inactive, User}
 import gleam/string
 import gleeunit/should
 import lustre/element
+import lustre/element/html
 
 // =============================================================================
 // Basic Template Tests
@@ -395,5 +397,45 @@ pub fn edge_cases_span_element_test() {
   edge_cases.render()
   |> element.to_string()
   |> string.contains("<span>")
+  |> should.be_true()
+}
+
+// =============================================================================
+// Composition Tests ({@element} / {@elements})
+// =============================================================================
+
+/// Lustre marks fragments with HTML comments when rendering to a string.
+fn without_fragment_markers(html: String) -> String {
+  html
+  |> string.replace("<!-- lustre:fragment -->", "")
+  |> string.replace("<!-- /lustre:fragment -->", "")
+}
+
+fn render_layout() -> String {
+  composition.render("Title", html.nav([], [element.text("menu")]), [
+    html.p([], [element.text("one")]),
+    html.p([], [element.text("two")]),
+  ])
+  |> element.to_string()
+  |> without_fragment_markers()
+}
+
+pub fn composition_renders_single_element_test() {
+  render_layout()
+  |> string.contains("<aside><nav>menu</nav></aside>")
+  |> should.be_true()
+}
+
+pub fn composition_renders_element_list_in_order_test() {
+  render_layout()
+  |> string.contains("<main><h1>Title</h1><p>one</p><p>two</p></main>")
+  |> should.be_true()
+}
+
+pub fn composition_renders_empty_element_list_test() {
+  composition.render("Empty", element.none(), [])
+  |> element.to_string()
+  |> without_fragment_markers()
+  |> string.contains("<main><h1>Empty</h1></main>")
   |> should.be_true()
 }

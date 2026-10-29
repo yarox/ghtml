@@ -8,8 +8,9 @@ import ghtml/cache
 import ghtml/codegen_utils
 import ghtml/types.{
   type Attribute, type CaseBranch, type Node, type Template, BooleanAttribute,
-  CaseNode, DynamicAttribute, EachNode, Element, EventAttribute, ExprNode,
-  Fragment, IfNode, StaticAttribute, TextNode,
+  CaseNode, DynamicAttribute, EachNode, Element, EmbedElement, EmbedElements,
+  EmbedNode, EventAttribute, ExprNode, Fragment, IfNode, StaticAttribute,
+  TextNode,
 }
 import gleam/list
 import gleam/option.{None, Some}
@@ -205,6 +206,8 @@ fn generate_node_inline(node: Node) -> String {
       generate_each_node_inline(collection, item, index, body)
     CaseNode(expr, branches, _) -> generate_case_node_inline(expr, branches)
     Fragment(children, _) -> generate_fragment_inline(children)
+    EmbedNode(EmbedElement, expr, _) -> expr
+    EmbedNode(EmbedElements, expr, _) -> "fragment(" <> expr <> ")"
   }
 }
 

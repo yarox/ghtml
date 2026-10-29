@@ -4,10 +4,11 @@
 //// AST construction by the parser.
 
 import ghtml/types.{
-  type Attribute, type ParseError, type Position, type Token, BooleanAttribute,
-  CaseEnd, CasePattern, CaseStart, DynamicAttribute, EachEnd, EachStart, Else,
-  EventAttribute, Expr, HtmlClose, HtmlOpen, IfEnd, IfStart, Import, Params,
-  ParseError, Position, Span, StaticAttribute, Text,
+  type Attribute, type EmbedKind, type ParseError, type Position, type Token,
+  BooleanAttribute, CaseEnd, CasePattern, CaseStart, DynamicAttribute, EachEnd,
+  EachStart, Else, Embed, EmbedElement, EmbedElements, EventAttribute, Expr,
+  HtmlClose, HtmlOpen, IfEnd, IfStart, Import, Params, ParseError, Position,
+  Span, StaticAttribute, Text,
 }
 import gleam/list
 import gleam/option.{type Option, None, Some}
@@ -657,6 +658,22 @@ fn parse_brace_content(
       Ok(#(CaseEnd(span: span), rest, end_pos))
     }
 
+    // Embed directives: {@element expr}, {@elements expr}
+    "@elements " <> rest ->
+      parse_embed(EmbedElements, "@elements", rest, start_pos, pos)
+    "@element " <> rest ->
+      parse_embed(EmbedElement, "@element", rest, start_pos, pos)
+    "@" <> _ -> {
+      let #(name, _, _) =
+        extract_attr_name(string.drop_start(input, 1), "", pos)
+      Error(ParseError(
+        Span(start: start_pos, end: pos),
+        "Unknown directive {@"
+          <> name
+          <> "}. Expected {@element expr} or {@elements expr}",
+      ))
+    }
+
     // Regular expression: {expr}
     _ -> {
       case extract_expression(input, 0, "", pos) {
@@ -667,6 +684,29 @@ fn parse_brace_content(
         Error(err) -> Error(err)
       }
     }
+  }
+}
+
+/// Parse the expression of an embed directive such as `{@element expr}`.
+/// `directive` is the text after `{`, used for position tracking and errors.
+fn parse_embed(
+  kind: EmbedKind,
+  directive: String,
+  input: String,
+  start_pos: Position,
+  pos: Position,
+) -> Result(#(Token, String, Position), ParseError) {
+  let pos = advance_pos_str(pos, directive <> " ")
+  case extract_expression(input, 0, "", pos) {
+    Ok(#(expr, remaining, end_pos)) -> {
+      let span = Span(start: start_pos, end: end_pos)
+      case string.trim(expr) {
+        "" ->
+          Error(ParseError(span, "Expected an expression after {" <> directive))
+        expr -> Ok(#(Embed(kind:, content: expr, span:), remaining, end_pos))
+      }
+    }
+    Error(err) -> Error(err)
   }
 }
 

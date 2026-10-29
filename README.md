@@ -203,6 +203,31 @@ Web components work too. Tags with hyphens automatically use `element()`.
 <p>Use {{ and }} for literal braces</p>
 ```
 
+`{expr}` always inserts text (`expr` must be a `String`).
+
+</details>
+
+<details>
+<summary><strong>🧩 Composition</strong></summary>
+
+Insert other elements (another template, a `children` parameter, `element.map(...)`):
+
+```html
+@params(title: String, sidebar: Element(msg), children: List(Element(msg)))
+
+<div class="layout">
+  <!-- A single Element(msg) -->
+  <aside>{@element sidebar}</aside>
+  <main>
+    <h1>{title}</h1>
+    <!-- A List(Element(msg)) -->
+    {@elements children}
+  </main>
+</div>
+```
+
+`{@element expr}` inserts `expr` as is. `{@elements expr}` inserts `fragment(expr)`.
+
 </details>
 
 <details>

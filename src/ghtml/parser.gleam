@@ -210,6 +210,13 @@ fn build_ast_loop(
           build_ast_loop(rest, stack, errors)
         }
 
+        // Embed directive: {@element expr} / {@elements expr}
+        types.Embed(kind: kind, content: content, span: span) -> {
+          let node = types.EmbedNode(kind: kind, expr: content, span: span)
+          let stack = add_node_to_stack(node, stack)
+          build_ast_loop(rest, stack, errors)
+        }
+
         // If start
         IfStart(condition: condition, span: span) -> {
           let frame =
