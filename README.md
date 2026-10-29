@@ -323,6 +323,9 @@ To name Lustre types in `@params`, write `attribute.Attribute(msg)`, or import t
 <div style="color: red" />
 <img width="24" height={size} />
 
+<!-- DOM properties (not attributes): the value is a Json -->
+<sl-select .value={json.string(selected)}></sl-select>
+
 <!-- Spread a List(Attribute(msg)), in source order -->
 <button class="btn" {...extra_attrs}>Go</button>
 

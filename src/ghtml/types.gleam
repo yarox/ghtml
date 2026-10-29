@@ -32,6 +32,8 @@ pub type Attribute {
   BooleanAttribute(name: String)
   /// `{...expr}`: `expr` is a `List(Attribute(msg))`
   SpreadAttribute(expr: String)
+  /// `.name={expr}`: a DOM property; `expr` is a `Json` value
+  PropertyAttribute(name: String, expr: String)
 }
 
 /// Token types produced by the tokenizer

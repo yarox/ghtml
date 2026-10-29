@@ -97,7 +97,7 @@ src/components/user_card.ghtml  →  src/components/user_card.gleam
 All shared types are defined here:
 - **Position/Span** - Source locations for error reporting
 - **Token** - Lexer output (Import, Params, HtmlOpen, IfStart, etc.)
-- **Attribute** - Attribute variants (StaticAttribute, DynamicAttribute, EventAttribute with modifiers: List(String), BooleanAttribute, SpreadAttribute for `{...attrs}`)
+- **Attribute** - Attribute variants (StaticAttribute, DynamicAttribute, EventAttribute with modifiers: List(String), BooleanAttribute, SpreadAttribute for `{...attrs}`, PropertyAttribute for `.name={json}`)
 - **Node** - AST nodes (Element, TextNode, ExprNode, IfNode, EachNode, CaseNode, Fragment, EmbedNode)
 - **EmbedKind** - What an embed directive inserts (EmbedElement for `{@element}`, EmbedElements for `{@elements}`, EmbedHtml for `{@html}`, which the parser only allows as the only child of an element)
 - **Template** - Final parsed result with imports, params, and body nodes
@@ -218,6 +218,10 @@ Utilities for E2E testing:
   <div @click.stop.prevent={handle()}>No bubbling</div>
 </div>
 ```
+
+Other attribute forms:
+- `{...attrs}` → spread a `List(Attribute(msg))` (joined with `list.flatten`, source order)
+- `.name={json}` → `attribute.property("name", json)`
 
 Event modifiers:
 - `.prevent` → wraps with `event.prevent_default()`

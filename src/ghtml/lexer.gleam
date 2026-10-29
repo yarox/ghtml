@@ -8,7 +8,7 @@ import ghtml/types.{
   BooleanAttribute, CaseEnd, CasePattern, CaseStart, DynamicAttribute, EachEnd,
   EachStart, Else, Embed, EmbedElement, EmbedElements, EmbedHtml, EventAttribute,
   Expr, HtmlClose, HtmlOpen, IfEnd, IfStart, Import, Params, ParseError,
-  Position, Span, SpreadAttribute, StaticAttribute, Text,
+  Position, PropertyAttribute, Span, SpreadAttribute, StaticAttribute, Text,
 }
 import gleam/list
 import gleam/option.{type Option, None, Some}
@@ -376,6 +376,33 @@ fn parse_single_attribute(
             expr -> Ok(#(SpreadAttribute(expr:), remaining, end_pos))
           }
         Error(err) -> Error(err)
+      }
+    }
+
+    // DOM property: .name={json}
+    "." <> rest -> {
+      let start_pos = pos
+      let pos = advance_pos(pos, ".")
+      let #(name, rest, new_pos) = extract_attr_name(rest, "", pos)
+      case name, rest {
+        "", _ ->
+          Error(ParseError(
+            Span(start: start_pos, end: new_pos),
+            "Expected a property name after '.'",
+          ))
+        _, "={" <> after -> {
+          let new_pos = advance_pos_str(new_pos, "={")
+          case extract_expression(after, 0, "", new_pos) {
+            Ok(#(expr, remaining, end_pos)) ->
+              Ok(#(PropertyAttribute(name:, expr:), remaining, end_pos))
+            Error(err) -> Error(err)
+          }
+        }
+        _, _ ->
+          Error(ParseError(
+            Span(start: start_pos, end: new_pos),
+            "A DOM property needs a Json expression: ." <> name <> "={json}",
+          ))
       }
     }
 

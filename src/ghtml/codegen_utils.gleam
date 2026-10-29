@@ -6,7 +6,8 @@
 import ghtml/types.{
   type Attribute, type CaseBranch, type Node, BooleanAttribute, CaseNode,
   DynamicAttribute, EachNode, Element, EmbedElements, EmbedNode, EventAttribute,
-  ExprNode, Fragment, IfNode, SpreadAttribute, StaticAttribute, TextNode,
+  ExprNode, Fragment, IfNode, PropertyAttribute, SpreadAttribute,
+  StaticAttribute, TextNode,
 }
 import gleam/list
 import gleam/option.{None, Some}
@@ -195,6 +196,7 @@ fn node_expressions(node: Node) -> List(String) {
           DynamicAttribute(_, expr) -> Ok(expr)
           EventAttribute(_, handler, _) -> Ok(handler)
           SpreadAttribute(expr) -> Ok(expr)
+          PropertyAttribute(_, expr) -> Ok(expr)
           _ -> Error(Nil)
         }
       })
@@ -243,7 +245,7 @@ fn has_non_event_attrs(attrs: List(Attribute)) -> Bool {
     case attr {
       StaticAttribute(_, _) -> True
       DynamicAttribute(_, _) -> True
-      BooleanAttribute(_) -> True
+      BooleanAttribute(_) | PropertyAttribute(_, _) -> True
       EventAttribute(_, _, _) | SpreadAttribute(_) -> False
     }
   })

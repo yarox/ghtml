@@ -12,11 +12,13 @@ import e2e/lustre/generated/custom_elements
 import e2e/lustre/generated/edge_cases
 import e2e/lustre/generated/fragments
 import e2e/lustre/generated/loops
+import e2e/lustre/generated/properties
 import e2e/lustre/generated/raw_html
 import e2e/lustre/generated/spread_attributes
 import e2e/lustre/generated/svg_icon
 import e2e/lustre/generated/typed_attributes
 import e2e/lustre/generated/types.{Active, Inactive, User}
+import gleam/json
 import gleam/string
 import gleeunit/should
 import lustre/attribute
@@ -603,4 +605,16 @@ pub fn spread_empty_list_test() {
   spread_attributes.render([])
   |> element.to_string()
   |> should.equal("<button class=\"btn\" type=\"button\">Go</button>")
+}
+
+// =============================================================================
+// DOM Property Tests (.name={json})
+// =============================================================================
+
+pub fn properties_compile_and_keep_attributes_test() {
+  // Properties are set on the DOM node by the client runtime; they are not
+  // part of the server-rendered HTML. Attributes still are.
+  properties.render(json.array([1, 2, 3], json.int), "Sales")
+  |> element.to_string()
+  |> should.equal("<my-chart class=\"chart\" label=\"Sales\"></my-chart>")
 }

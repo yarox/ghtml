@@ -10,7 +10,7 @@ import ghtml/types.{
   type Attribute, type CaseBranch, type Node, type Template, BooleanAttribute,
   CaseNode, DynamicAttribute, EachNode, Element, EmbedElement, EmbedElements,
   EmbedHtml, EmbedNode, EventAttribute, ExprNode, Fragment, IfNode,
-  SpreadAttribute, StaticAttribute, TextNode,
+  PropertyAttribute, SpreadAttribute, StaticAttribute, TextNode,
 }
 import gleam/list
 import gleam/option.{None, Some}
@@ -463,6 +463,8 @@ fn generate_attr(attr: Attribute, is_custom: Bool) -> String {
     BooleanAttribute(name) -> generate_boolean_attr(name, is_custom)
     // Spreads are handled by generate_attrs
     SpreadAttribute(expr) -> expr
+    PropertyAttribute(name, expr) ->
+      "attribute.property(\"" <> name <> "\", " <> expr <> ")"
   }
 }
 

@@ -1,0 +1,5 @@
+@import(gleam/json.{type Json})
+
+@params(points: Json, label: String)
+
+<my-chart class="chart" .data={points} label={label}></my-chart>

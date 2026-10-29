@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Keyed loops: `{#each items as item (key)}` and `{#each items as item, i (key)}` use `keyed.fragment` with the given `String` key
 - SVG: elements inside `<svg>` are created in the SVG namespace with `element.namespaced` (tag names such as `linearGradient` keep their case); `<foreignObject>` holds HTML again
 - Raw HTML: `{@html expr}` as the only child of an element generates `element.unsafe_raw_html` (in the SVG namespace inside `<svg>`)
+- DOM properties: `.name={json}` generates `attribute.property(name, json)` (useful for web components)
 - Attribute spread: `<div class="a" {...attrs}>` adds a `List(Attribute(msg))`, in source order (`list.flatten`)
 - `lustre/attribute` and `lustre/event` are imported when `@params` or expressions refer to them, and are not imported again when the template imports them itself
 
