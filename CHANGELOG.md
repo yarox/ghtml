@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Whitespace: a space between inline elements on one line (`<b>a</b> <i>b</i>`) was removed. Now whitespace follows JSX-like rules: same-line whitespace between siblings is one space, whitespace with a newline and whitespace at the start or end of an element is removed, and text runs are collapsed (`"\n  Submit\n "` becomes `"Submit"`)
 - `<pre>` and `<textarea>` content lost its whitespace; it is now kept exactly
+- HTML character references were escaped a second time (`&amp;` showed as `&amp;` on the page). Text and static attribute values now decode common named references and all numeric ones (`&amp;`, `&copy;`, `&nbsp;`, `&#169;`, `&#xA9;`); unknown names stay as written
 - `style="..."`, `width="..."` and `height="..."` generated calls that did not compile (`attribute.style` takes two arguments, `attribute.width`/`height` take an `Int`). They now use `attribute.attribute(name, value)`; interpolated values are `String`, as for other attributes
 - A boolean attribute with a written value (`disabled="disabled"`) generated `attribute.disabled("disabled")`, which did not compile
 

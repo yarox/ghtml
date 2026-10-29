@@ -1,7 +1,8 @@
 // @generated from content.ghtml
-// @hash 29dc5cda2661d26aaa5d70bd1508e777a231ae2852205cf5b76e229482660921
+// @hash d0fa6e2440353c266c93ce2646c49211d4ee21f39fda998c865714d39f73d1e3
 // DO NOT EDIT - regenerate with: gleam run -m ghtml
 
+import lustre/attribute
 import lustre/element.{type Element, text}
 import lustre/element/html
 
@@ -15,5 +16,8 @@ pub fn render(name name: String) -> Element(msg) {
       text("!"),
     ]),
     html.pre([], [text("line 1\n    indented")]),
+    html.p([attribute.class("legal"), attribute.title("Q&A")], [
+      text("© 2026 Tom & Jerry"),
+    ]),
   ])
 }

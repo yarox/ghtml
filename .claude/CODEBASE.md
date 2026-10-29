@@ -149,6 +149,9 @@ Lustre-specific code generation:
 - Custom elements (tags with `-`) use `element("tag-name", ...)` instead of `html.tag()`
 - Namespaces: generators carry a `Namespace` (Html | Svg). Children of `<svg>` use `namespaced(svg_namespace, tag, ...)`; `<foreignObject>` switches back to Html
 
+### `src/ghtml/entities.gleam` - Character References
+- `decode(text)` - Decodes `&amp;`, common named references and numeric ones; the parser applies it to text (after the whitespace rules) and static attribute values, because Lustre escapes text itself
+
 ### `src/ghtml/scanner.gleam` - File Discovery
 - `find_lustre_files(root)` - Recursively find `.ghtml` files
 - `find_orphans(root)` - Find generated files with no source

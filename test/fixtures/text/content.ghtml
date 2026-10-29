@@ -4,4 +4,5 @@
   <p>Hello, <b>{name}</b> <i>and friends</i>!</p>
   <pre>line 1
     indented</pre>
+  <p class="legal" title="Q&amp;A">&copy; 2026 Tom &amp; Jerry</p>
 </article>

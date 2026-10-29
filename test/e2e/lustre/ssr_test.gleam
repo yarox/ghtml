@@ -683,3 +683,12 @@ pub fn text_pre_keeps_whitespace_test() {
   |> string.contains("<pre>line 1\n    indented</pre>")
   |> should.be_true()
 }
+
+pub fn text_entities_are_rendered_once_test() {
+  // &amp; in the template is one "&", which Lustre escapes once
+  render_text()
+  |> string.contains(
+    "<p class=\"legal\" title=\"Q&amp;A\">© 2026 Tom &amp; Jerry</p>",
+  )
+  |> should.be_true()
+}

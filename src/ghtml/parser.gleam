@@ -4,6 +4,7 @@
 //// stack-based nesting of HTML elements, control flow blocks, and metadata
 //// extraction (imports/params).
 
+import ghtml/entities
 import ghtml/lexer
 import ghtml/types.{
   type Attribute, type CaseBranch, type Node, type ParseError, type ParseResult,
@@ -87,7 +88,7 @@ const preformatted_elements = ["pre", "textarea"]
 fn normalize_whitespace(nodes: List(Node), preformatted: Bool) -> List(Node) {
   let nodes = list.map(nodes, normalize_children(_, preformatted))
   case preformatted {
-    True -> nodes
+    True -> decode_text(nodes)
     False ->
       nodes
       |> list.filter_map(fn(node) {
@@ -102,7 +103,19 @@ fn normalize_whitespace(nodes: List(Node), preformatted: Bool) -> List(Node) {
         }
       })
       |> trim_edges
+      |> decode_text
   }
+}
+
+/// Decode character references (`&amp;`) in text nodes. This runs after
+/// the whitespace rules, so a decoded `&nbsp;` is never trimmed.
+fn decode_text(nodes: List(Node)) -> List(Node) {
+  list.map(nodes, fn(node) {
+    case node {
+      TextNode(content, span) -> TextNode(entities.decode(content), span)
+      _ -> node
+    }
+  })
 }
 
 /// Normalize the children of one node
@@ -111,6 +124,14 @@ fn normalize_children(node: Node, preformatted: Bool) -> Node {
     Element(tag, attrs, children, span) -> {
       let child_preformatted =
         preformatted || list.contains(preformatted_elements, tag)
+      let attrs =
+        list.map(attrs, fn(attr) {
+          case attr {
+            types.StaticAttribute(name, value) ->
+              types.StaticAttribute(name, entities.decode(value))
+            _ -> attr
+          }
+        })
       Element(
         tag,
         attrs,
