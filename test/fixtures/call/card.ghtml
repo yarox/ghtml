@@ -1,0 +1,6 @@
+@params(title: String, body: List(Element(msg)))
+
+<section class="card">
+  <h2>{title}</h2>
+  {@elements body}
+</section>

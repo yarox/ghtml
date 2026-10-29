@@ -406,7 +406,9 @@ e2e-regen:
                    test/fixtures/svg/icon.ghtml \
                    test/fixtures/raw_html/content.ghtml \
                    test/fixtures/attributes/spread.ghtml \
-                   test/fixtures/properties/chart.ghtml; do
+                   test/fixtures/properties/chart.ghtml \
+                   test/fixtures/call/card.ghtml \
+                   test/fixtures/call/page.ghtml; do
         echo "  Processing: $fixture"
         # The generator outputs alongside source, so we need to process after
     done
@@ -429,6 +431,8 @@ e2e-regen:
     cp test/fixtures/raw_html/content.gleam test/e2e/lustre/generated/raw_html.gleam 2>/dev/null || true
     cp test/fixtures/attributes/spread.gleam test/e2e/lustre/generated/spread_attributes.gleam 2>/dev/null || true
     cp test/fixtures/properties/chart.gleam test/e2e/lustre/generated/properties.gleam 2>/dev/null || true
+    cp test/fixtures/call/card.gleam test/e2e/lustre/generated/card.gleam 2>/dev/null || true
+    cp test/fixtures/call/page.gleam test/e2e/lustre/generated/call_page.gleam 2>/dev/null || true
 
     # Clean up generated files from fixtures directory
     rm -f test/fixtures/simple/basic.gleam
@@ -444,6 +448,8 @@ e2e-regen:
     rm -f test/fixtures/raw_html/content.gleam
     rm -f test/fixtures/attributes/spread.gleam
     rm -f test/fixtures/properties/chart.gleam
+    rm -f test/fixtures/call/card.gleam
+    rm -f test/fixtures/call/page.gleam
 
     # Fix import paths for generated modules (types -> e2e/lustre/generated/types)
     # Use platform-specific sed syntax (macOS vs Linux)
@@ -451,6 +457,18 @@ e2e-regen:
         sed -i '' 's/^import types\./import e2e\/lustre\/generated\/types./' test/e2e/lustre/generated/control_flow.gleam
     else
         sed -i 's/^import types\./import e2e\/lustre\/generated\/types./' test/e2e/lustre/generated/control_flow.gleam
+    fi
+
+    # call/page.ghtml imports sibling fixtures by file name (card, layout);
+    # point them at the copied modules
+    if [[ "$(uname)" == "Darwin" ]]; then
+        sed -i '' -e 's/^import card$/import e2e\/lustre\/generated\/card/' \
+            -e 's/^import layout$/import e2e\/lustre\/generated\/composition as layout/' \
+            test/e2e/lustre/generated/call_page.gleam
+    else
+        sed -i -e 's/^import card$/import e2e\/lustre\/generated\/card/' \
+            -e 's/^import layout$/import e2e\/lustre\/generated\/composition as layout/' \
+            test/e2e/lustre/generated/call_page.gleam
     fi
 
     # Format the generated files

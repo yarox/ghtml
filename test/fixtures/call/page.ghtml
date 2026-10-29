@@ -1,0 +1,17 @@
+@import(card)
+@import(layout)
+
+@import(gleam/string)
+
+@params(users: List(String))
+
+{#call layout.render(title: "Users", sidebar: element.none())}
+  {#call card.render(title: "List") as body}
+    <ul>
+      {#each users as user}
+        <li>{user}</li>
+      {/each}
+    </ul>
+  {/call}
+  <p class="count">{string.inspect(list.length(users))} users</p>
+{/call}

@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - Element interpolation: `{@element expr}` inserts an `Element(msg)`, `{@elements expr}` inserts a `List(Element(msg))` (composition, `children` parameters)
+- Call blocks: `{#call f(args)}...{/call}` passes the content to `f` as `children: [...]`; `{#call f(args) as name}` passes it as `name: [...]`
 - Keyed loops: `{#each items as item (key)}` and `{#each items as item, i (key)}` use `keyed.fragment` with the given `String` key
 - SVG: elements inside `<svg>` are created in the SVG namespace with `element.namespaced` (tag names such as `linearGradient` keep their case); `<foreignObject>` holds HTML again
 - Raw HTML: `{@html expr}` as the only child of an element generates `element.unsafe_raw_html` (in the SVG namespace inside `<svg>`)

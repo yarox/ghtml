@@ -41,6 +41,7 @@ type StackFrame {
     body: List(Node),
     span: Span,
   )
+  CallFrame(expr: String, label: Option(String), body: List(Node), span: Span)
   CaseFrame(
     expr: String,
     current_pattern: Option(String),
@@ -92,7 +93,8 @@ fn check_raw_html(nodes: List(Node), allowed: Bool) -> List(ParseError) {
           check_raw_html(then_branch, False),
           check_raw_html(else_branch, False),
         )
-      EachNode(body: body, ..) -> check_raw_html(body, False)
+      EachNode(body: body, ..) | types.CallNode(body: body, ..) ->
+        check_raw_html(body, False)
       CaseNode(branches: branches, ..) ->
         list.flat_map(branches, fn(branch: CaseBranch) {
           check_raw_html(branch.body, False)
@@ -388,6 +390,33 @@ fn build_ast_loop(
           }
         }
 
+        // Call start
+        types.CallStart(expr: expr, label: label, span: span) -> {
+          let frame = CallFrame(expr:, label:, body: [], span:)
+          build_ast_loop(rest, [frame, ..stack], errors)
+        }
+
+        // Call end
+        types.CallEnd(span: end_span) -> {
+          case stack {
+            [CallFrame(expr:, label:, body:, span:), ..rest_stack] -> {
+              let node =
+                types.CallNode(
+                  expr:,
+                  label:,
+                  body: list.reverse(body),
+                  span: Span(start: span.start, end: end_span.end),
+                )
+              build_ast_loop(rest, add_node_to_stack(node, rest_stack), errors)
+            }
+            _ -> {
+              let error =
+                ParseError(end_span, "{/call} without matching {#call}")
+              build_ast_loop(rest, stack, [error, ..errors])
+            }
+          }
+        }
+
         // Case start
         CaseStart(expr: expr, span: span) -> {
           let frame =
@@ -548,6 +577,7 @@ fn get_frame_children(frame: StackFrame) -> List(Node) {
       span: _,
     ) -> nodes
     EachFrame(body: body, ..) -> body
+    CallFrame(body: body, ..) -> body
     CaseFrame(
       expr: _,
       current_pattern: _,
@@ -592,6 +622,7 @@ fn set_frame_children(frame: StackFrame, children: List(Node)) -> StackFrame {
         span: span,
       )
     EachFrame(..) -> EachFrame(..frame, body: children)
+    CallFrame(..) -> CallFrame(..frame, body: children)
     CaseFrame(
       expr: expr,
       current_pattern: pat,
@@ -617,6 +648,7 @@ fn unclosed_frame_error(frame: StackFrame) -> ParseError {
     IfFrame(condition: _, then_nodes: _, else_nodes: _, in_else: _, span: span) ->
       ParseError(span, "Unclosed {#if} block")
     EachFrame(span: span, ..) -> ParseError(span, "Unclosed {#each} block")
+    CallFrame(span: span, ..) -> ParseError(span, "Unclosed {#call} block")
     CaseFrame(
       expr: _,
       current_pattern: _,

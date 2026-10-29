@@ -60,6 +60,8 @@ pub type Token {
   CaseEnd(span: Span)
   Comment(span: Span)
   Embed(kind: EmbedKind, content: String, span: Span)
+  CallStart(expr: String, label: Option(String), span: Span)
+  CallEnd(span: Span)
 }
 
 /// What an embed directive (`{@...}`) inserts into the element tree
@@ -95,6 +97,9 @@ pub type Node {
   CaseNode(expr: String, branches: List(CaseBranch), span: Span)
   Fragment(children: List(Node), span: Span)
   EmbedNode(kind: EmbedKind, expr: String, span: Span)
+  /// `{#call expr}body{/call}`: `expr` is a function call; `body` is passed
+  /// to it as the labelled argument `label` (default `children`)
+  CallNode(expr: String, label: Option(String), body: List(Node), span: Span)
 }
 
 /// A branch in a case expression

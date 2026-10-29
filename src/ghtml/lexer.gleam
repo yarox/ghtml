@@ -5,10 +5,11 @@
 
 import ghtml/types.{
   type Attribute, type EmbedKind, type ParseError, type Position, type Token,
-  BooleanAttribute, CaseEnd, CasePattern, CaseStart, DynamicAttribute, EachEnd,
-  EachStart, Else, Embed, EmbedElement, EmbedElements, EmbedHtml, EventAttribute,
-  Expr, HtmlClose, HtmlOpen, IfEnd, IfStart, Import, Params, ParseError,
-  Position, PropertyAttribute, Span, SpreadAttribute, StaticAttribute, Text,
+  BooleanAttribute, CallEnd, CallStart, CaseEnd, CasePattern, CaseStart,
+  DynamicAttribute, EachEnd, EachStart, Else, Embed, EmbedElement, EmbedElements,
+  EmbedHtml, EventAttribute, Expr, HtmlClose, HtmlOpen, IfEnd, IfStart, Import,
+  Params, ParseError, Position, PropertyAttribute, Span, SpreadAttribute,
+  StaticAttribute, Text,
 }
 import gleam/list
 import gleam/option.{type Option, None, Some}
@@ -662,6 +663,29 @@ fn parse_brace_content(
       }
     }
 
+    // Call: {#call f(args)} or {#call f(args) as name}
+    "#call " <> rest -> {
+      let pos = advance_pos_str(pos, "#call ")
+      case extract_expression(rest, 0, "", pos) {
+        Ok(#(content, remaining, end_pos)) -> {
+          let span = Span(start: start_pos, end: end_pos)
+          case parse_call_header(string.trim(content)) {
+            Ok(#(expr, label)) ->
+              Ok(#(CallStart(expr:, label:, span:), remaining, end_pos))
+            Error(message) -> Error(ParseError(span, message))
+          }
+        }
+        Error(err) -> Error(err)
+      }
+    }
+
+    // End call: {/call}
+    "/call}" <> rest -> {
+      let end_pos = advance_pos_str(pos, "/call}")
+      let span = Span(start: start_pos, end: end_pos)
+      Ok(#(CallEnd(span: span), rest, end_pos))
+    }
+
     // End each: {/each}
     "/each}" <> rest -> {
       let end_pos = advance_pos_str(pos, "/each}")
@@ -754,6 +778,59 @@ fn parse_embed(
       }
     }
     Error(err) -> Error(err)
+  }
+}
+
+/// Split `f(args) as name` into the call and the optional argument name.
+/// The call must end with `)`; `name` must be a lowercase Gleam name.
+fn parse_call_header(
+  content: String,
+) -> Result(#(String, Option(String)), String) {
+  let #(expr, label) = case string.ends_with(content, ")") {
+    True -> #(content, None)
+    False ->
+      case list.reverse(string.split(content, " as ")) {
+        [name, last_call_part, ..before] -> #(
+          string.trim(string.join(
+            list.reverse([last_call_part, ..before]),
+            " as ",
+          )),
+          Some(string.trim(name)),
+        )
+        _ -> #(content, None)
+      }
+  }
+  case string.ends_with(expr, ")") && string.contains(expr, "(") {
+    False ->
+      Error(
+        "{#call} needs a function call, for example {#call layout.render(title)}",
+      )
+    True ->
+      case label {
+        Some(name) ->
+          case is_lower_name(name) {
+            True -> Ok(#(expr, label))
+            False ->
+              Error(
+                "Expected a lowercase argument name after 'as' in {#call}, found '"
+                <> name
+                <> "'",
+              )
+          }
+        None -> Ok(#(expr, None))
+      }
+  }
+}
+
+/// A Gleam lowercase name: starts with a-z, then a-z, 0-9 or _
+fn is_lower_name(name: String) -> Bool {
+  case string.to_graphemes(name) {
+    [] -> False
+    [first, ..rest] ->
+      string.contains("abcdefghijklmnopqrstuvwxyz", first)
+      && list.all(rest, fn(char) {
+        string.contains("abcdefghijklmnopqrstuvwxyz0123456789_", char)
+      })
   }
 }
 

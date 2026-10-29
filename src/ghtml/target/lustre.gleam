@@ -8,9 +8,9 @@ import ghtml/cache
 import ghtml/codegen_utils
 import ghtml/types.{
   type Attribute, type CaseBranch, type Node, type Template, BooleanAttribute,
-  CaseNode, DynamicAttribute, EachNode, Element, EmbedElement, EmbedElements,
-  EmbedHtml, EmbedNode, EventAttribute, ExprNode, Fragment, IfNode,
-  PropertyAttribute, SpreadAttribute, StaticAttribute, TextNode,
+  CallNode, CaseNode, DynamicAttribute, EachNode, Element, EmbedElement,
+  EmbedElements, EmbedHtml, EmbedNode, EventAttribute, ExprNode, Fragment,
+  IfNode, PropertyAttribute, SpreadAttribute, StaticAttribute, TextNode,
 }
 import gleam/list
 import gleam/option.{None, Some}
@@ -209,7 +209,8 @@ fn uses_element_constructor(
       IfNode(_, then_branch, else_branch, _) ->
         uses_element_constructor(then_branch, ns, matches)
         || uses_element_constructor(else_branch, ns, matches)
-      EachNode(body: body, ..) -> uses_element_constructor(body, ns, matches)
+      EachNode(body: body, ..) | CallNode(body: body, ..) ->
+        uses_element_constructor(body, ns, matches)
       CaseNode(_, branches, _) ->
         list.any(branches, fn(b: CaseBranch) {
           uses_element_constructor(b.body, ns, matches)
@@ -325,6 +326,8 @@ fn generate_node_inline(node: Node, ns: Namespace) -> String {
     Fragment(children, _) -> generate_fragment_inline(children, ns)
     EmbedNode(EmbedElement, expr, _) -> expr
     EmbedNode(EmbedElements, expr, _) -> "fragment(" <> expr <> ")"
+    CallNode(expr, label, body, _) ->
+      generate_call_inline(expr, option.unwrap(label, "children"), body, ns)
     // The parser only allows {@html} as the only child of an element, where
     // generate_element_inline handles it. This branch is a safe fallback.
     EmbedNode(EmbedHtml, expr, _) ->
@@ -675,6 +678,69 @@ fn generate_each_node_inline(
   <> ") { "
   <> callback_body
   <> " }))"
+}
+
+/// Generate code for a call block: the body becomes a list passed to the
+/// call as the labelled argument `label`. `f(a)` → `f(a, label: [...])`.
+fn generate_call_inline(
+  expr: String,
+  label: String,
+  body: List(Node),
+  ns: Namespace,
+) -> String {
+  let argument = label <> ": [" <> generate_children_inline(body, ns) <> "]"
+  case split_last_call(expr) {
+    Ok(#(callee, arguments)) ->
+      case string.trim(arguments) {
+        "" -> callee <> "(" <> argument <> ")"
+        arguments -> {
+          let arguments = case string.ends_with(arguments, ",") {
+            True -> string.drop_end(arguments, 1)
+            False -> arguments
+          }
+          callee <> "(" <> arguments <> ", " <> argument <> ")"
+        }
+      }
+    // The lexer only accepts expressions that end with a call
+    Error(_) -> expr <> "(" <> argument <> ")"
+  }
+}
+
+/// Split `f(a, g(b))` into `#("f", "a, g(b)")`: the text before the `(`
+/// that matches the final `)`, and the arguments inside. Parentheses in
+/// string literals are ignored.
+fn split_last_call(expr: String) -> Result(#(String, String), Nil) {
+  let chars = string.to_graphemes(expr)
+  let last_index = list.length(chars) - 1
+  let open =
+    list.index_fold(chars, #([], False, False, Error(Nil)), fn(state, char, i) {
+      let #(stack, in_string, escaped, found) = state
+      case in_string, escaped, char {
+        True, True, _ -> #(stack, True, False, found)
+        True, False, "\\" -> #(stack, True, True, found)
+        True, False, "\"" -> #(stack, False, False, found)
+        True, False, _ -> state
+        False, _, "\"" -> #(stack, True, False, found)
+        False, _, "(" -> #([i, ..stack], False, False, found)
+        False, _, ")" ->
+          case stack {
+            [open, ..rest] if i == last_index -> #(rest, False, False, Ok(open))
+            [_, ..rest] -> #(rest, False, False, found)
+            [] -> state
+          }
+        False, _, _ -> state
+      }
+    }).3
+  case open {
+    Ok(open) ->
+      Ok(#(
+        string.concat(list.take(chars, open)),
+        string.concat(
+          list.drop(chars, open + 1) |> list.take(last_index - open - 1),
+        ),
+      ))
+    Error(_) -> Error(Nil)
+  }
 }
 
 /// Generate code for a case node

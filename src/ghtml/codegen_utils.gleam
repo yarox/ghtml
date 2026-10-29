@@ -4,9 +4,9 @@
 //// backends. Target-specific code lives in ghtml/target/ modules.
 
 import ghtml/types.{
-  type Attribute, type CaseBranch, type Node, BooleanAttribute, CaseNode,
-  DynamicAttribute, EachNode, Element, EmbedElements, EmbedNode, EventAttribute,
-  ExprNode, Fragment, IfNode, PropertyAttribute, SpreadAttribute,
+  type Attribute, type CaseBranch, type Node, BooleanAttribute, CallNode,
+  CaseNode, DynamicAttribute, EachNode, Element, EmbedElements, EmbedNode,
+  EventAttribute, ExprNode, Fragment, IfNode, PropertyAttribute, SpreadAttribute,
   StaticAttribute, TextNode,
 }
 import gleam/list
@@ -35,6 +35,7 @@ fn child_nodes(node: Node) -> List(Node) {
     IfNode(_, then_branch, else_branch, _) ->
       list.append(then_branch, else_branch)
     EachNode(body: body, ..) -> body
+    CallNode(body: body, ..) -> body
     CaseNode(_, branches, _) ->
       list.flat_map(branches, fn(b: CaseBranch) { b.body })
     Fragment(children, _) -> children
@@ -180,6 +181,7 @@ fn node_expressions(node: Node) -> List(String) {
   case node {
     ExprNode(expr, _) -> [expr]
     EmbedNode(_, expr, _) -> [expr]
+    CallNode(expr: expr, ..) -> [expr]
     IfNode(condition, _, _, _) -> [condition]
     EachNode(collection:, key:, ..) ->
       case key {

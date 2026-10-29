@@ -232,6 +232,25 @@ Insert other elements (another template, a `children` parameter, `element.map(..
 
 `{@element expr}` inserts `expr` as is. `{@elements expr}` inserts `fragment(expr)`.
 
+**Pass markup to another template** with a call block. The content becomes a `List(Element(msg))` argument, named `children` by default, or the name after `as`:
+
+```html
+@import(components/layout)
+@import(components/card)
+
+{#call layout.render(title: "Users")}
+  {#call card.render(title: "List") as body}
+    <ul>
+      {#each users as user (user.id)}
+        <li>{user.name}</li>
+      {/each}
+    </ul>
+  {/call}
+{/call}
+```
+
+This generates `layout.render(title: "Users", children: [card.render(title: "List", body: [...])])`. Generated `render` functions have labelled parameters, so `layout.ghtml` only needs `@params(title: String, children: List(Element(msg)))`. Any function call works, also your own Gleam functions with a matching label.
+
 </details>
 
 <details>

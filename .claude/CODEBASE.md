@@ -98,7 +98,8 @@ All shared types are defined here:
 - **Position/Span** - Source locations for error reporting
 - **Token** - Lexer output (Import, Params, HtmlOpen, IfStart, etc.)
 - **Attribute** - Attribute variants (StaticAttribute, DynamicAttribute, EventAttribute with modifiers: List(String), BooleanAttribute, SpreadAttribute for `{...attrs}`, PropertyAttribute for `.name={json}`)
-- **Node** - AST nodes (Element, TextNode, ExprNode, IfNode, EachNode, CaseNode, Fragment, EmbedNode)
+- **Node** - AST nodes (Element, TextNode, ExprNode, IfNode, EachNode, CaseNode, Fragment, EmbedNode, CallNode)
+- **CallNode** - `{#call f(args) as name}body{/call}`: body is passed as `name: [...]` (default label `children`); the lexer requires `f(args)` to end with a call
 - **EmbedKind** - What an embed directive inserts (EmbedElement for `{@element}`, EmbedElements for `{@elements}`, EmbedHtml for `{@html}`, which the parser only allows as the only child of an element)
 - **Template** - Final parsed result with imports, params, and body nodes
 - **Target** - Code generation target backend (currently: Lustre). Includes `target_from_string()` and `valid_target_names()`.
@@ -212,6 +213,10 @@ Utilities for E2E testing:
 
   <aside>{@element sidebar}</aside>
   {@elements children}
+
+  {#call card.render(title: "Box") as body}
+    <p>Passed to card.render as body: [...]</p>
+  {/call}
 
   <button @click={on_click()}>Click me</button>
   <div @on:dragover.prevent={on_dragover()}>Drop here</div>

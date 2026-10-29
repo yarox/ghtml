@@ -6,6 +6,7 @@
 
 import e2e/lustre/generated/attributes
 import e2e/lustre/generated/basic
+import e2e/lustre/generated/call_page
 import e2e/lustre/generated/composition
 import e2e/lustre/generated/control_flow
 import e2e/lustre/generated/custom_elements
@@ -629,4 +630,34 @@ pub fn properties_compile_and_keep_attributes_test() {
   properties.render(json.array([1, 2, 3], json.int), "Sales")
   |> element.to_string()
   |> should.equal("<my-chart class=\"chart\" label=\"Sales\"></my-chart>")
+}
+
+// =============================================================================
+// Call Block Tests ({#call ...}...{/call})
+// =============================================================================
+
+fn render_call_page(users: List(String)) -> String {
+  call_page.render(users)
+  |> element.to_string()
+  |> without_fragment_markers()
+}
+
+pub fn call_passes_content_as_children_test() {
+  render_call_page(["ann"])
+  |> string.contains("<main><h1>Users</h1><section class=\"card\">")
+  |> should.be_true()
+}
+
+pub fn call_passes_content_to_named_argument_test() {
+  render_call_page(["ann", "bo"])
+  |> string.contains(
+    "<section class=\"card\"><h2>List</h2><ul><li>ann</li><li>bo</li></ul></section>",
+  )
+  |> should.be_true()
+}
+
+pub fn call_keeps_content_order_test() {
+  render_call_page(["ann", "bo"])
+  |> string.contains("</section><p class=\"count\">2 users</p></main>")
+  |> should.be_true()
 }
