@@ -52,7 +52,7 @@ pub fn dispatcher_produces_valid_lustre_output_test() {
   should.be_true(string.contains(code, "html.div("))
   should.be_true(string.contains(code, "attribute.class(\"container\")"))
   should.be_true(string.contains(code, "text(name)"))
-  should.be_true(string.contains(code, "pub fn render(name: String)"))
+  should.be_true(string.contains(code, "pub fn render(name name: String)"))
 }
 
 pub fn dispatcher_with_complex_template_test() {

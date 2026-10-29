@@ -6,7 +6,7 @@ import gleam/json.{type Json}
 import lustre/attribute
 import lustre/element.{type Element, element}
 
-pub fn render(points: Json, label: String) -> Element(msg) {
+pub fn render(points points: Json, label label: String) -> Element(msg) {
   element(
     "my-chart",
     [

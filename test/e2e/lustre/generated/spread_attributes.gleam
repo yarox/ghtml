@@ -7,7 +7,7 @@ import lustre/attribute.{type Attribute}
 import lustre/element.{type Element, text}
 import lustre/element/html
 
-pub fn render(extra: List(Attribute(msg))) -> Element(msg) {
+pub fn render(extra extra: List(Attribute(msg))) -> Element(msg) {
   html.button(
     list.flatten([[attribute.class("btn")], extra, [attribute.type_("button")]]),
     [text("Go")],

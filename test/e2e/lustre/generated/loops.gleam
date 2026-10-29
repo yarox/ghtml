@@ -9,8 +9,8 @@ import lustre/element/html
 import lustre/element/keyed
 
 pub fn render(
-  rows: List(#(String, String)),
-  names: List(String),
+  rows rows: List(#(String, String)),
+  names names: List(String),
 ) -> Element(msg) {
   fragment([
     html.ul([attribute.class("keyed")], [

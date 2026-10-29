@@ -7,7 +7,7 @@ import lustre/attribute
 import lustre/element.{type Element, fragment, text}
 import lustre/element/html
 
-pub fn render(items: List(String)) -> Element(msg) {
+pub fn render(items items: List(String)) -> Element(msg) {
   fragment([
     html.header([attribute.class("header")], [text("Header Content")]),
     html.main([attribute.class("main")], [

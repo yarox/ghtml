@@ -5,7 +5,10 @@
 import lustre/attribute
 import lustre/element.{type Element, element, none, text}
 
-pub fn render(content: String, is_active: Bool) -> Element(msg) {
+pub fn render(
+  content content: String,
+  is_active is_active: Bool,
+) -> Element(msg) {
   element("my-component", [attribute.class("custom")], [
     element("slot-content", [], [text(content)]),
     case is_active {

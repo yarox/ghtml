@@ -6,6 +6,6 @@ import lustre/attribute
 import lustre/element.{type Element, text}
 import lustre/element/html
 
-pub fn render(message: String) -> Element(msg) {
+pub fn render(message message: String) -> Element(msg) {
   html.div([attribute.class("greeting")], [html.p([], [text(message)])])
 }

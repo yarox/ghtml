@@ -8,10 +8,10 @@ import lustre/element/html
 import lustre/event
 
 pub fn render(
-  value: String,
-  is_disabled: Bool,
-  on_change: fn(String) -> msg,
-  on_click: fn() -> msg,
+  value value: String,
+  is_disabled is_disabled: Bool,
+  on_change on_change: fn(String) -> msg,
+  on_click on_click: fn() -> msg,
 ) -> Element(msg) {
   html.form([attribute.class("form")], [
     html.input([

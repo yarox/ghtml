@@ -300,7 +300,27 @@ pub fn generate_format_compliant_params_test() {
   let code = lustre.generate(template, "test.ghtml", "abc123")
 
   // Parameters should be on single line without trailing comma
-  should.be_true(string.contains(code, "name: String, count: Int) ->"))
+  should.be_true(string.contains(
+    code,
+    "(name name: String, count count: Int) ->",
+  ))
+}
+
+pub fn generate_params_are_labelled_test() {
+  let template =
+    Template(
+      imports: [],
+      params: [#("title", "String"), #("_unused", "Int")],
+      body: [Element("div", [], [], test_span())],
+    )
+
+  let code = lustre.generate(template, "test.ghtml", "abc123")
+
+  // Labels allow `render(title: "x")`; a discarded name cannot be a label
+  should.be_true(string.contains(
+    code,
+    "pub fn render(title title: String, _unused: Int)",
+  ))
 }
 
 pub fn generate_format_compliant_single_child_test() {

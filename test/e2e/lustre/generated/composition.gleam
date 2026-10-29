@@ -7,9 +7,9 @@ import lustre/element.{type Element, fragment, text}
 import lustre/element/html
 
 pub fn render(
-  title: String,
-  sidebar: Element(msg),
-  children: List(Element(msg)),
+  title title: String,
+  sidebar sidebar: Element(msg),
+  children children: List(Element(msg)),
 ) -> Element(msg) {
   html.div([attribute.class("layout")], [
     html.aside([], [sidebar]),

@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 - A boolean attribute with a written value (`disabled="disabled"`) generated `attribute.disabled("disabled")`, which did not compile
 
 ### Changed
+- Generated `render` functions have labelled parameters (`render(title title: String)`), so callers can write `card.render(title: "x")`. Positional calls still work. Names that start with `_` stay unlabelled
 - **Breaking:** `{#each}` without a key is no longer keyed. It generates `fragment(list.map(...))`. Before, it used `item.id` as the key (so lists of strings did not compile), or the index when an index was given. After upgrading, run `gleam run -m ghtml -- force`, because the cache only checks the template content.
 - An unused loop index is prefixed with `_`, and `gleam/int` is imported for index loops only when the template uses `int.`, so the generated code has no warnings
 

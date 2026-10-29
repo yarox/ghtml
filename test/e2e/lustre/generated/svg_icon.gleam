@@ -7,7 +7,11 @@ import lustre/attribute
 import lustre/element.{type Element, fragment, namespaced, text}
 import lustre/element/html
 
-pub fn render(size: String, label: String, radii: List(String)) -> Element(msg) {
+pub fn render(
+  size size: String,
+  label label: String,
+  radii radii: List(String),
+) -> Element(msg) {
   html.svg(
     [
       attribute.class("icon"),

@@ -295,10 +295,18 @@ fn generate_function(template: Template) -> String {
   }
 }
 
-/// Generate function parameters from template params (single line, no trailing comma)
+/// Generate function parameters from template params (single line, no
+/// trailing comma). Each parameter is also a label (`title title: String`),
+/// so callers can write `card.render(title: "x")`; positional calls still
+/// work. Discarded names (`_x`) cannot be labels and stay unlabelled.
 fn generate_params(params: List(#(String, String))) -> String {
   params
-  |> list.map(fn(p) { p.0 <> ": " <> p.1 })
+  |> list.map(fn(p) {
+    case string.starts_with(p.0, "_") {
+      True -> p.0 <> ": " <> p.1
+      False -> p.0 <> " " <> p.0 <> ": " <> p.1
+    }
+  })
   |> string.join(", ")
 }
 

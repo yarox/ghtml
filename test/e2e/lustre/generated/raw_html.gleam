@@ -5,7 +5,7 @@
 import lustre/attribute
 import lustre/element.{type Element, fragment, unsafe_raw_html}
 
-pub fn render(body: String, icon: String) -> Element(msg) {
+pub fn render(body body: String, icon icon: String) -> Element(msg) {
   fragment([
     unsafe_raw_html("", "article", [attribute.class("post")], body),
     unsafe_raw_html(

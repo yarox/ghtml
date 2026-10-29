@@ -440,6 +440,18 @@ pub fn composition_renders_element_list_in_order_test() {
   |> should.be_true()
 }
 
+pub fn composition_accepts_labelled_arguments_test() {
+  composition.render(
+    children: [html.p([], [element.text("body")])],
+    title: "Labels",
+    sidebar: element.none(),
+  )
+  |> element.to_string()
+  |> without_fragment_markers()
+  |> string.contains("<main><h1>Labels</h1><p>body</p></main>")
+  |> should.be_true()
+}
+
 pub fn composition_renders_empty_element_list_test() {
   composition.render("Empty", element.none(), [])
   |> element.to_string()

@@ -6,7 +6,11 @@ import lustre/attribute
 import lustre/element.{type Element, text}
 import lustre/element/html
 
-pub fn render(css: String, size: String, busy: Bool) -> Element(msg) {
+pub fn render(
+  css css: String,
+  size size: String,
+  busy busy: Bool,
+) -> Element(msg) {
   html.div(
     [attribute.attribute("style", "color: red"), attribute.class("typed")],
     [

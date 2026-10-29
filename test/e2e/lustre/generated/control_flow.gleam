@@ -11,7 +11,11 @@ import lustre/attribute
 import lustre/element.{type Element, fragment, text}
 import lustre/element/html
 
-pub fn render(user: User, items: List(String), status: Status) -> Element(msg) {
+pub fn render(
+  user user: User,
+  items items: List(String),
+  status status: Status,
+) -> Element(msg) {
   html.article([attribute.class("user-card")], [
     case user.is_admin {
       True -> html.span([attribute.class("badge")], [text("Admin")])
