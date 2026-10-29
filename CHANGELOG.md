@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - HTML character references were escaped a second time (`&amp;` showed as `&amp;` on the page). Text and static attribute values now decode common named references and all numeric ones (`&amp;`, `&copy;`, `&nbsp;`, `&#169;`, `&#xA9;`); unknown names stay as written
 - `<style>` and `<script>` content was parsed as template syntax (CSS braces became expressions) and passed as children; it is now raw text passed as a `String` (`html.style(attrs, css)`), as Lustre expects
 - `<title>`, `<option>` and `<textarea>` generated a children list, but their Lustre functions take a `String`; their text and `{expr}` parts are now joined with `<>`. Other content in them is a parse error
+- A parameter or loop/case variable named `text`, `none`, `fragment`, `namespaced` or `unsafe_raw_html` hid the imported function, and the code did not compile. Generated code now calls `element.text(...)` etc. in that case. A name that hides a module the generated code uses (`html`, `attribute`, `event`, `keyed`, `list`, `element`) is now a clear parse error
 - `style="..."`, `width="..."` and `height="..."` generated calls that did not compile (`attribute.style` takes two arguments, `attribute.width`/`height` take an `Int`). They now use `attribute.attribute(name, value)`; interpolated values are `String`, as for other attributes
 - A boolean attribute with a written value (`disabled="disabled"`) generated `attribute.disabled("disabled")`, which did not compile
 

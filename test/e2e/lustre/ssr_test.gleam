@@ -15,6 +15,7 @@ import e2e/lustre/generated/fragments
 import e2e/lustre/generated/loops
 import e2e/lustre/generated/properties
 import e2e/lustre/generated/raw_html
+import e2e/lustre/generated/shadow
 import e2e/lustre/generated/spread_attributes
 import e2e/lustre/generated/svg_icon
 import e2e/lustre/generated/text_content
@@ -718,4 +719,19 @@ pub fn text_textarea_keeps_content_test() {
   render_text()
   |> string.contains("<textarea>  keep\n this</textarea>")
   |> should.be_true()
+}
+
+// =============================================================================
+// Name Clash Tests (parameters named like lustre/element functions)
+// =============================================================================
+
+pub fn shadowed_functions_still_work_test() {
+  should.equal(
+    shadow.render("Hi", True) |> element.to_string(),
+    "<p>Hi<b>!</b></p>",
+  )
+  should.equal(
+    shadow.render("Hi", False) |> element.to_string(),
+    "<p>Hi</p>",
+  )
 }

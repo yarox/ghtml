@@ -4,6 +4,7 @@
 //// stack-based nesting of HTML elements, control flow blocks, and metadata
 //// extraction (imports/params).
 
+import ghtml/codegen_utils
 import ghtml/entities
 import ghtml/lexer
 import ghtml/types.{
@@ -64,7 +65,13 @@ pub fn parse(input: String) -> ParseResult(Template) {
         Error(errors) -> Error(errors)
         Ok(body) -> {
           let body = normalize_whitespace(body, False)
-          case list.append(check_raw_html(body, False), check_text_only(body)) {
+          let errors =
+            list.flatten([
+              check_raw_html(body, False),
+              check_text_only(body),
+              check_reserved_names(params, body),
+            ])
+          case errors {
             [] -> Ok(Template(imports, params, body))
             errors -> Error(errors)
           }
@@ -240,6 +247,74 @@ fn collapse_whitespace(text: String) -> String {
 }
 
 // === Validation ===
+
+/// Modules that generated code refers to by name. A template variable with
+/// one of these names would hide the module.
+const reserved_names = [
+  #("html", "lustre/element/html"),
+  #("attribute", "lustre/attribute"),
+  #("event", "lustre/event"),
+  #("keyed", "lustre/element/keyed"),
+  #("list", "gleam/list"),
+  #("element", "lustre/element"),
+]
+
+/// Parameters and loop or case variables must not hide a module that the
+/// generated code uses.
+fn check_reserved_names(
+  params: List(#(String, String)),
+  body: List(Node),
+) -> List(ParseError) {
+  let param_errors =
+    list.filter_map(params, fn(param) {
+      reserved_name_error(param.0, types.point_span(types.start_position()))
+    })
+  list.append(param_errors, check_reserved_in_nodes(body))
+}
+
+fn check_reserved_in_nodes(nodes: List(Node)) -> List(ParseError) {
+  list.flat_map(nodes, fn(node) {
+    let own = case node {
+      EachNode(item:, index:, span:, ..) ->
+        list.append(
+          codegen_utils.pattern_variables(item),
+          option.unwrap(option.map(index, fn(i) { [i] }), []),
+        )
+        |> list.filter_map(reserved_name_error(_, span))
+      CaseNode(_, branches, span) ->
+        list.flat_map(branches, fn(branch: CaseBranch) {
+          codegen_utils.pattern_variables(branch.pattern)
+        })
+        |> list.filter_map(reserved_name_error(_, span))
+      _ -> []
+    }
+    let children = case node {
+      Element(children: children, ..) | types.Fragment(children, _) -> children
+      IfNode(_, then_branch, else_branch, _) ->
+        list.append(then_branch, else_branch)
+      EachNode(body: body, ..) | types.CallNode(body: body, ..) -> body
+      CaseNode(_, branches, _) ->
+        list.flat_map(branches, fn(branch: CaseBranch) { branch.body })
+      TextNode(..) | ExprNode(..) | types.EmbedNode(..) -> []
+    }
+    list.append(own, check_reserved_in_nodes(children))
+  })
+}
+
+fn reserved_name_error(name: String, span: Span) -> Result(ParseError, Nil) {
+  case list.key_find(reserved_names, name) {
+    Ok(module) ->
+      Ok(ParseError(
+        span,
+        "The name '"
+          <> name
+          <> "' hides the module "
+          <> module
+          <> " that the generated code uses; rename it",
+      ))
+    Error(_) -> Error(Nil)
+  }
+}
 
 /// `<title>`, `<option>` and `<textarea>` can only contain text and
 /// `{expr}`, because their content becomes a String.

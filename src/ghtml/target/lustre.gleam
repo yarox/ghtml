@@ -56,14 +56,49 @@ const boolean_attributes = [
 pub fn generate(template: Template, source_path: String, hash: String) -> String {
   let filename = codegen_utils.extract_filename(source_path)
   let header = cache.generate_header(filename, hash)
-  let imports = generate_imports(template)
-  let body = generate_function(template)
+  let hidden = hidden_element_functions(template)
+  let imports = generate_imports(template, hidden)
+  let body = resolve_functions(generate_function(template), hidden)
 
   header <> "\n" <> imports <> "\n\n" <> body <> "\n"
 }
 
+// === lustre/element functions ===
+
+/// Functions from lustre/element that generated code calls unqualified
+const element_functions = [
+  "text", "none", "fragment", "element", "namespaced", "unsafe_raw_html",
+]
+
+/// Marks a call to a lustre/element function in generated code. After
+/// generation, `resolve_functions` writes `name` or `element.name`. The
+/// marker is a private-use character, so it never appears in user code.
+const function_marker = "\u{E000}"
+
+fn fun(name: String) -> String {
+  function_marker <> name
+}
+
+/// Write each marked function call unqualified, or through the module when
+/// a template name hides the function (`@params(text: String)`).
+fn resolve_functions(code: String, hidden: List(String)) -> String {
+  list.fold(element_functions, code, fn(code, name) {
+    let resolved = case list.contains(hidden, name) {
+      True -> "element." <> name
+      False -> name
+    }
+    string.replace(code, fun(name), resolved)
+  })
+}
+
+/// The lustre/element functions that a template name hides
+fn hidden_element_functions(template: Template) -> List(String) {
+  let names = codegen_utils.template_variable_names(template)
+  list.filter(element_functions, list.contains(names, _))
+}
+
 /// Generate import statements for the generated module
-fn generate_imports(template: Template) -> String {
+fn generate_imports(template: Template, hidden: List(String)) -> String {
   // lustre/attribute and lustre/event are imported when generated code uses
   // them, or when the template refers to them (`attribute.Attribute(msg)` in
   // @params, `attribute.id(x)` in a spread). If the user imports a module
@@ -127,6 +162,9 @@ fn generate_imports(template: Template) -> String {
     False -> element_items
   }
 
+  // A hidden function is called as element.name, so it is not imported
+  let element_items =
+    list.filter(element_items, fn(item) { !list.contains(hidden, item) })
   let element_import =
     "import lustre/element.{" <> string.join(element_items, ", ") <> "}"
 
@@ -323,7 +361,12 @@ fn generate_function(template: Template) -> String {
   let ns = Html
 
   case list.length(template.body) {
-    0 -> "pub fn render(" <> params <> ") -> Element(msg) {\n  fragment([])\n}"
+    0 ->
+      "pub fn render("
+      <> params
+      <> ") -> Element(msg) {\n  "
+      <> fun("fragment")
+      <> "([])\n}"
     1 -> {
       let body =
         generate_node_inline(
@@ -350,7 +393,9 @@ fn generate_function(template: Template) -> String {
         |> string.join(",\n")
       "pub fn render("
       <> params
-      <> ") -> Element(msg) {\n  fragment([\n"
+      <> ") -> Element(msg) {\n  "
+      <> fun("fragment")
+      <> "([\n"
       <> children
       <> ",\n  ])\n}"
     }
@@ -378,7 +423,7 @@ fn generate_node_inline(node: Node, ns: Namespace) -> String {
     Element(tag, attrs, children, _) ->
       generate_element_inline(tag, attrs, children, ns)
     TextNode(content, _) -> generate_text_inline(content)
-    ExprNode(expr, _) -> "text(" <> expr <> ")"
+    ExprNode(expr, _) -> fun("text") <> "(" <> expr <> ")"
     IfNode(condition, then_branch, else_branch, _) ->
       generate_if_node_inline(condition, then_branch, else_branch, ns)
     EachNode(collection, item, index, key, body, _) ->
@@ -386,13 +431,13 @@ fn generate_node_inline(node: Node, ns: Namespace) -> String {
     CaseNode(expr, branches, _) -> generate_case_node_inline(expr, branches, ns)
     Fragment(children, _) -> generate_fragment_inline(children, ns)
     EmbedNode(EmbedElement, expr, _) -> expr
-    EmbedNode(EmbedElements, expr, _) -> "fragment(" <> expr <> ")"
+    EmbedNode(EmbedElements, expr, _) -> fun("fragment") <> "(" <> expr <> ")"
     CallNode(expr, label, body, _) ->
       generate_call_inline(expr, option.unwrap(label, "children"), body, ns)
     // The parser only allows {@html} as the only child of an element, where
     // generate_element_inline handles it. This branch is a safe fallback.
     EmbedNode(EmbedHtml, expr, _) ->
-      "unsafe_raw_html(\"\", \"span\", [], " <> expr <> ")"
+      fun("unsafe_raw_html") <> "(\"\", \"span\", [], " <> expr <> ")"
   }
 }
 
@@ -419,7 +464,8 @@ fn generate_element_inline(
         Svg, _ | Html, "svg" -> #(svg_namespace, True)
         Html, _ -> #("", codegen_utils.is_custom_element(tag))
       }
-      "unsafe_raw_html(\""
+      fun("unsafe_raw_html")
+      <> "(\""
       <> namespace
       <> "\", \""
       <> tag
@@ -436,7 +482,8 @@ fn generate_element_inline(
         "foreignObject" -> Html
         _ -> Svg
       }
-      "namespaced(\""
+      fun("namespaced")
+      <> "(\""
       <> svg_namespace
       <> "\", \""
       <> tag
@@ -476,7 +523,8 @@ fn generate_html_element(
       <> ")"
     True, _ -> {
       let children_code = generate_children_inline(children, children_ns)
-      "element(\""
+      fun("element")
+      <> "(\""
       <> tag
       <> "\", "
       <> attrs_code
@@ -650,7 +698,7 @@ fn find_attr_function(name: String) -> Result(String, Nil) {
 fn generate_text_inline(content: String) -> String {
   case content {
     "" -> ""
-    _ -> "text(\"" <> codegen_utils.escape_string(content) <> "\")"
+    _ -> fun("text") <> "(\"" <> codegen_utils.escape_string(content) <> "\")"
   }
 }
 
@@ -676,7 +724,7 @@ fn generate_if_node_inline(
 ) -> String {
   let then_code = generate_branch_content(then_branch, ns)
   let else_code = case else_branch {
-    [] -> "none()"
+    [] -> fun("none") <> "()"
     _ -> generate_branch_content(else_branch, ns)
   }
 
@@ -692,11 +740,11 @@ fn generate_if_node_inline(
 /// Generate code for branch content (single node or fragment for multiple)
 fn generate_branch_content(nodes: List(Node), ns: Namespace) -> String {
   case nodes {
-    [] -> "none()"
+    [] -> fun("none") <> "()"
     [single] -> generate_node_inline(single, ns)
     multiple -> {
       let children = generate_children_inline(multiple, ns)
-      "fragment([" <> children <> "])"
+      fun("fragment") <> "([" <> children <> "])"
     }
   }
 }
@@ -733,7 +781,7 @@ fn generate_each_node_inline(
   }
 
   let #(wrapper, callback_body) = case key {
-    None -> #("fragment", body_code)
+    None -> #(fun("fragment"), body_code)
     Some(key) -> #("keyed.fragment", "#(" <> key <> ", " <> body_code <> ")")
   }
 
@@ -832,5 +880,5 @@ fn generate_case_node_inline(
 /// Generate code for a fragment node
 fn generate_fragment_inline(children: List(Node), ns: Namespace) -> String {
   let children_code = generate_children_inline(children, ns)
-  "fragment([" <> children_code <> "])"
+  fun("fragment") <> "([" <> children_code <> "])"
 }

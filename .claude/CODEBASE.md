@@ -147,6 +147,7 @@ Lustre-specific code generation:
 - Smart imports: only includes `gleam/list` if `{#each}` is used, etc.
 - Handles attribute mapping (class→attribute.class, @click→event.on_click)
 - Custom elements (tags with `-`) use `element("tag-name", ...)` instead of `html.tag()`
+- lustre/element functions (`text`, `none`, `fragment`, `element`, `namespaced`, `unsafe_raw_html`) are emitted through `fun(name)` (a private-use marker); `resolve_functions` writes `name`, or `element.name` when a template variable hides it (`codegen_utils.template_variable_names`). The parser rejects variables that hide modules (`html`, `attribute`, `event`, `keyed`, `list`, `element`)
 - String-content elements: `style`/`script` (raw text from the lexer) and `title`/`option`/`textarea` (text + `{expr}` joined with `<>`, checked by the parser) generate `html.tag(attrs, string)`
 - Namespaces: generators carry a `Namespace` (Html | Svg). Children of `<svg>` use `namespaced(svg_namespace, tag, ...)`; `<foreignObject>` switches back to Html
 

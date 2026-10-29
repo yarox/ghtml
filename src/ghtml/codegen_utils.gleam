@@ -4,10 +4,10 @@
 //// backends. Target-specific code lives in ghtml/target/ modules.
 
 import ghtml/types.{
-  type Attribute, type CaseBranch, type Node, BooleanAttribute, CallNode,
-  CaseNode, DynamicAttribute, EachNode, Element, EmbedElements, EmbedNode,
-  EventAttribute, ExprNode, Fragment, IfNode, PropertyAttribute, SpreadAttribute,
-  StaticAttribute, TextNode,
+  type Attribute, type CaseBranch, type Node, type Template, BooleanAttribute,
+  CallNode, CaseNode, DynamicAttribute, EachNode, Element, EmbedElements,
+  EmbedNode, EventAttribute, ExprNode, Fragment, IfNode, PropertyAttribute,
+  SpreadAttribute, StaticAttribute, TextNode,
 }
 import gleam/list
 import gleam/option.{None, Some}
@@ -229,6 +229,104 @@ fn is_identifier_char(char: String) -> Bool {
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_",
     char,
   )
+}
+
+/// All variable names a template defines: parameters, loop items and
+/// indexes, and variables in case patterns. Labels and fields are not
+/// included (`Label(text: x)` defines `x`, not `text`).
+pub fn template_variable_names(template: Template) -> List(String) {
+  let param_names = list.map(template.params, fn(param) { param.0 })
+  let bound_names =
+    collect_nodes(template.body, fn(node) {
+      case node {
+        EachNode(item:, index:, ..) ->
+          list.append(
+            pattern_variables(item),
+            option.map(index, fn(i) { [i] }) |> option.unwrap([]),
+          )
+        CaseNode(_, branches, _) ->
+          list.flat_map(branches, fn(b: CaseBranch) {
+            pattern_variables(b.pattern)
+          })
+        _ -> []
+      }
+    })
+  list.unique(list.append(param_names, bound_names))
+}
+
+/// Collect values from every node in the tree
+fn collect_nodes(nodes: List(Node), get: fn(Node) -> List(a)) -> List(a) {
+  list.flat_map(nodes, fn(node) {
+    list.append(get(node), collect_nodes(child_nodes(node), get))
+  })
+}
+
+/// The variables a Gleam pattern binds: lowercase names that are not a
+/// label (before `:`), a module (before `.`), a field (after `.`), or text
+/// in a string.
+pub fn pattern_variables(pattern: String) -> List(String) {
+  pattern_variables_loop(string.to_graphemes(pattern), "", "", False, [])
+  |> list.reverse
+}
+
+fn pattern_variables_loop(
+  chars: List(String),
+  word: String,
+  previous: String,
+  in_string: Bool,
+  found: List(String),
+) -> List(String) {
+  case chars, in_string {
+    [], _ -> add_variable(word, previous, [], found)
+    ["\"", ..rest], True -> pattern_variables_loop(rest, "", "", False, found)
+    [_, ..rest], True -> pattern_variables_loop(rest, "", "", True, found)
+    ["\"", ..rest], False ->
+      pattern_variables_loop(
+        rest,
+        "",
+        "",
+        True,
+        add_variable(word, previous, rest, found),
+      )
+    [char, ..rest], False ->
+      case is_identifier_char(char) {
+        True ->
+          case word {
+            "" -> pattern_variables_loop(rest, char, previous, False, found)
+            _ ->
+              pattern_variables_loop(rest, word <> char, previous, False, found)
+          }
+        False -> {
+          let found = add_variable(word, previous, [char, ..rest], found)
+          let previous = case char {
+            " " -> previous
+            _ -> char
+          }
+          pattern_variables_loop(rest, "", previous, False, found)
+        }
+      }
+  }
+}
+
+/// Add `word` if it is a variable: lowercase start, not a field (after
+/// `.`), not a module (before `.`) and not a label (before `:`)
+fn add_variable(
+  word: String,
+  previous: String,
+  rest: List(String),
+  found: List(String),
+) -> List(String) {
+  let next =
+    list.drop_while(rest, fn(c) { c == " " })
+    |> list.first
+  let is_lower = case string.first(word) {
+    Ok(first) -> string.contains("abcdefghijklmnopqrstuvwxyz", first)
+    Error(_) -> False
+  }
+  case is_lower && previous != "." && next != Ok(":") && next != Ok(".") {
+    True -> [word, ..found]
+    False -> found
+  }
 }
 
 /// Check if any nodes have attributes

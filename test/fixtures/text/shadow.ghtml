@@ -1,0 +1,3 @@
+@params(text: String, none: Bool)
+
+<p>{text}{#if none}<b>!</b>{/if}</p>
