@@ -730,8 +730,5 @@ pub fn shadowed_functions_still_work_test() {
     shadow.render("Hi", True) |> element.to_string(),
     "<p>Hi<b>!</b></p>",
   )
-  should.equal(
-    shadow.render("Hi", False) |> element.to_string(),
-    "<p>Hi</p>",
-  )
+  should.equal(shadow.render("Hi", False) |> element.to_string(), "<p>Hi</p>")
 }

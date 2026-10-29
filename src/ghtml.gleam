@@ -16,6 +16,7 @@
 import argv
 import ghtml/cache
 import ghtml/codegen
+import ghtml/format
 import ghtml/parser
 import ghtml/scanner
 import ghtml/types.{type Target}
@@ -156,23 +157,43 @@ pub fn generate_all(
   force: Bool,
   target: Target,
 ) -> GenerationStats {
-  scanner.find_ghtml_files(root)
-  |> list.fold(GenerationStats(0, 0, 0), fn(stats, source_path) {
-    let output_path = scanner.to_output_path(source_path)
+  let #(stats, written) =
+    scanner.find_ghtml_files(root)
+    |> list.fold(#(GenerationStats(0, 0, 0), []), fn(acc, source_path) {
+      let #(stats, written) = acc
+      let output_path = scanner.to_output_path(source_path)
 
-    case force || cache.needs_regeneration(source_path, output_path) {
-      True -> {
-        case process_file(source_path, output_path, target) {
-          Ok(_) -> GenerationStats(..stats, generated: stats.generated + 1)
-          Error(_) -> GenerationStats(..stats, errors: stats.errors + 1)
+      case force || cache.needs_regeneration(source_path, output_path) {
+        True -> {
+          case process_file(source_path, output_path, target) {
+            Ok(_) -> #(
+              GenerationStats(..stats, generated: stats.generated + 1),
+              [output_path, ..written],
+            )
+            Error(_) -> #(
+              GenerationStats(..stats, errors: stats.errors + 1),
+              written,
+            )
+          }
+        }
+        False -> {
+          io.println("· " <> source_path <> " (unchanged)")
+          #(GenerationStats(..stats, skipped: stats.skipped + 1), written)
         }
       }
-      False -> {
-        io.println("· " <> source_path <> " (unchanged)")
-        GenerationStats(..stats, skipped: stats.skipped + 1)
-      }
-    }
-  })
+    })
+
+  format_generated(written)
+  stats
+}
+
+/// Format generated files; a failure is reported but is not an error
+fn format_generated(paths: List(String)) -> Nil {
+  case format.format_files(paths) {
+    Ok(_) -> Nil
+    Error(message) ->
+      io.println("! Could not format generated files: " <> message)
+  }
 }
 
 /// Process a single template file

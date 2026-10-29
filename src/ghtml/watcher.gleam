@@ -14,6 +14,7 @@
 
 import ghtml/cache
 import ghtml/codegen
+import ghtml/format
 import ghtml/parser
 import ghtml/scanner
 import ghtml/types.{type Target}
@@ -195,7 +196,13 @@ pub fn process_single_file(source_path: String, target: Target) {
         Ok(template) -> {
           let gleam_code = codegen.generate(template, source_path, hash, target)
           case simplifile.write(output_path, gleam_code) {
-            Ok(_) -> io.println("  Generated: " <> output_path)
+            Ok(_) -> {
+              case format.format_files([output_path]) {
+                Ok(_) -> Nil
+                Error(message) -> io.println("  Could not format: " <> message)
+              }
+              io.println("  Generated: " <> output_path)
+            }
             Error(e) -> io.println("  Error writing: " <> string.inspect(e))
           }
         }

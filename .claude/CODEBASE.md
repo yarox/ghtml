@@ -154,6 +154,9 @@ Lustre-specific code generation:
 ### `src/ghtml/entities.gleam` - Character References
 - `decode(text)` - Decodes `&amp;`, common named references and numeric ones; the parser applies it to text (after the whitespace rules) and static attribute values, because Lustre escapes text itself
 
+### `src/ghtml/format.gleam` - Formatting
+- `format_files(paths)` - Runs `gleam format` on generated files (CLI after a run, watcher after each file); best effort
+
 ### `src/ghtml/scanner.gleam` - File Discovery
 - `find_lustre_files(root)` - Recursively find `.ghtml` files
 - `find_orphans(root)` - Find generated files with no source
