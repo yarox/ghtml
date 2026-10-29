@@ -176,11 +176,12 @@ pub fn each_node_test() {
       collection: "items",
       item: "item",
       index: Some("i"),
+      key: None,
       body: [TextNode("Item", span)],
       span: span,
     )
   should.be_true(is_each_node(node))
-  let EachNode(collection, item, index, body, _) = node
+  let EachNode(collection, item, index, _, body, _) = node
   should.equal(collection, "items")
   should.equal(item, "item")
   should.equal(index, Some("i"))
@@ -189,7 +190,7 @@ pub fn each_node_test() {
 
 fn is_each_node(node: types.Node) -> Bool {
   case node {
-    EachNode(_, _, _, _, _) -> True
+    EachNode(_, _, _, _, _, _) -> True
     _ -> False
   }
 }
@@ -201,10 +202,11 @@ pub fn each_node_without_index_test() {
       collection: "items",
       item: "item",
       index: None,
+      key: None,
       body: [TextNode("Item", span)],
       span: span,
     )
-  let EachNode(_, _, index, _, _) = node
+  let EachNode(_, _, index, _, _, _) = node
   should.equal(index, None)
 }
 

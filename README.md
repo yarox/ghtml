@@ -132,6 +132,10 @@ Change a file. Blink. It's regenerated. Your flow stays unbroken.
 {#each items as item}
   <li>{item}</li>
 {/each}
+
+{#each users as user (user.id)}
+  <li>{user.name}</li>
+{/each}
 ```
 
 ### 🧹 Auto Cleanup
@@ -244,6 +248,11 @@ Insert other elements (another template, a `children` parameter, `element.map(..
 <!-- Loops -->
 {#each items as item, index}
   <li>{int.to_string(index)}: {item}</li>
+{/each}
+
+<!-- Keyed loops: add a String key in ( ) for lists that change order -->
+{#each users as user (user.id)}
+  <li>{user.name}</li>
 {/each}
 
 <!-- Pattern matching -->

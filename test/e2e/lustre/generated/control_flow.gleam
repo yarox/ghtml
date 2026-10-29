@@ -8,9 +8,8 @@ import e2e/lustre/generated/types.{
 import gleam/int
 import gleam/list
 import lustre/attribute
-import lustre/element.{type Element, text}
+import lustre/element.{type Element, fragment, text}
 import lustre/element/html
-import lustre/element/keyed
 
 pub fn render(user: User, items: List(String), status: Status) -> Element(msg) {
   html.article([attribute.class("user-card")], [
@@ -19,12 +18,9 @@ pub fn render(user: User, items: List(String), status: Status) -> Element(msg) {
       False -> html.span([attribute.class("badge")], [text("User")])
     },
     html.ul([], [
-      keyed.fragment(
+      fragment(
         list.index_map(items, fn(item, i) {
-          #(
-            int.to_string(i),
-            html.li([], [text(int.to_string(i)), text(": "), text(item)]),
-          )
+          html.li([], [text(int.to_string(i)), text(": "), text(item)])
         }),
       ),
     ]),

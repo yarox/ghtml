@@ -37,6 +37,7 @@ type StackFrame {
     collection: String,
     item: String,
     index: Option(String),
+    key: Option(String),
     body: List(Node),
     span: Span,
   )
@@ -297,12 +298,19 @@ fn build_ast_loop(
         }
 
         // Each start
-        EachStart(collection: collection, item: item, index: index, span: span) -> {
+        EachStart(
+          collection: collection,
+          item: item,
+          index: index,
+          key: key,
+          span: span,
+        ) -> {
           let frame =
             EachFrame(
               collection: collection,
               item: item,
               index: index,
+              key: key,
               body: [],
               span: span,
             )
@@ -317,6 +325,7 @@ fn build_ast_loop(
                 collection: coll,
                 item: item,
                 index: index,
+                key: key,
                 body: body,
                 span: span,
               ),
@@ -328,6 +337,7 @@ fn build_ast_loop(
                   collection: coll,
                   item: item,
                   index: index,
+                  key: key,
                   body: list.reverse(body),
                   span: combined_span,
                 )
@@ -501,7 +511,7 @@ fn get_frame_children(frame: StackFrame) -> List(Node) {
       in_else: True,
       span: _,
     ) -> nodes
-    EachFrame(collection: _, item: _, index: _, body: body, span: _) -> body
+    EachFrame(body: body, ..) -> body
     CaseFrame(
       expr: _,
       current_pattern: _,
@@ -545,14 +555,7 @@ fn set_frame_children(frame: StackFrame, children: List(Node)) -> StackFrame {
         in_else: True,
         span: span,
       )
-    EachFrame(collection: coll, item: item, index: idx, body: _, span: span) ->
-      EachFrame(
-        collection: coll,
-        item: item,
-        index: idx,
-        body: children,
-        span: span,
-      )
+    EachFrame(..) -> EachFrame(..frame, body: children)
     CaseFrame(
       expr: expr,
       current_pattern: pat,
@@ -577,8 +580,7 @@ fn unclosed_frame_error(frame: StackFrame) -> ParseError {
       ParseError(span, "Unclosed element <" <> tag <> ">")
     IfFrame(condition: _, then_nodes: _, else_nodes: _, in_else: _, span: span) ->
       ParseError(span, "Unclosed {#if} block")
-    EachFrame(collection: _, item: _, index: _, body: _, span: span) ->
-      ParseError(span, "Unclosed {#each} block")
+    EachFrame(span: span, ..) -> ParseError(span, "Unclosed {#each} block")
     CaseFrame(
       expr: _,
       current_pattern: _,

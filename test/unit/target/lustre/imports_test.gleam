@@ -89,6 +89,7 @@ pub fn generate_imports_with_each_test() {
         collection: "items",
         item: "item",
         index: None,
+        key: None,
         body: [Element("li", [], [], test_span())],
         span: test_span(),
       ),
@@ -96,9 +97,9 @@ pub fn generate_imports_with_each_test() {
 
   let code = lustre.generate(template, "test.ghtml", "abc123")
 
-  // Each requires list and keyed
+  // Each requires list; keyed only when the loop has a key
   should.be_true(string.contains(code, "import gleam/list"))
-  should.be_true(string.contains(code, "keyed"))
+  should.be_false(string.contains(code, "import lustre/element/keyed"))
 }
 
 pub fn generate_imports_with_each_index_test() {
@@ -108,6 +109,7 @@ pub fn generate_imports_with_each_index_test() {
         collection: "items",
         item: "item",
         index: Some("i"),
+        key: None,
         body: [Element("li", [], [], test_span())],
         span: test_span(),
       ),
@@ -115,8 +117,8 @@ pub fn generate_imports_with_each_index_test() {
 
   let code = lustre.generate(template, "test.ghtml", "abc123")
 
-  // Each with index requires gleam/int for int.to_string
-  should.be_true(string.contains(code, "import gleam/int"))
+  // The index is not used with int.*, so no gleam/int import (no warning)
+  should.be_false(string.contains(code, "import gleam/int"))
 }
 
 pub fn generate_imports_with_event_test() {
@@ -182,6 +184,7 @@ pub fn generate_imports_no_duplicate_list_test() {
         collection: "items",
         item: "item",
         index: None,
+        key: None,
         body: [Element("li", [], [], test_span())],
         span: test_span(),
       ),
@@ -208,6 +211,7 @@ pub fn generate_imports_no_duplicate_int_test() {
         collection: "items",
         item: "item",
         index: Some("i"),
+        key: None,
         body: [Element("li", [], [], test_span())],
         span: test_span(),
       ),
@@ -244,6 +248,7 @@ pub fn generate_imports_all_features_test() {
         "items",
         "item",
         Some("i"),
+        None,
         [Element("li", [], [], test_span())],
         test_span(),
       ),
@@ -253,9 +258,9 @@ pub fn generate_imports_all_features_test() {
 
   // All features should be present
   should.be_true(string.contains(code, "import gleam/list"))
-  should.be_true(string.contains(code, "import gleam/int"))
+  should.be_false(string.contains(code, "import gleam/int"))
   should.be_true(string.contains(code, "import lustre/event"))
-  should.be_true(string.contains(code, "keyed"))
+  should.be_false(string.contains(code, "keyed"))
   should.be_true(string.contains(code, "none"))
   should.be_true(string.contains(code, "fragment"))
   should.be_true(string.contains(code, "import app/types.{type User}"))
@@ -269,6 +274,7 @@ pub fn generate_imports_correct_order_test() {
       EachNode(
         "items",
         "item",
+        None,
         None,
         [Element("li", [], [], test_span())],
         test_span(),

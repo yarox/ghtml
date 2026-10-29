@@ -9,7 +9,7 @@
 )
 
 <sl-select label={label} value={selected} @sl-change={on_change}>
-  {#each options as opt, idx}
+  {#each options as opt}
     <sl-option value={opt.value}>{opt.label}</sl-option>
   {/each}
 </sl-select>

@@ -1,5 +1,5 @@
 // @generated from task_detail.ghtml
-// @hash 187b6487fea245106d20bacde34d0057ebfa669e52880188c3778add44e695d5
+// @hash 0053c993a4704cecf4cc69a43c0e7ed7b513580b0b1838c40e3a39fc427c74a5
 // DO NOT EDIT - regenerate with: gleam run -m ghtml
 
 import lustre/element.{type Element, text, element, none, fragment}

@@ -17,7 +17,7 @@
       <span class="ml-auto text-sm font-normal text-gray-500 dark:text-gray-400">{int.to_string(list.length(todo_tasks))}</span>
     </h2>
     <div class="space-y-3">
-      {#each todo_tasks as task, idx}
+      {#each todo_tasks as task (task.id)}
         <div
           class="bg-white dark:bg-gray-700 p-3 rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow"
           @click={on_task_click(task.id)}
@@ -38,7 +38,7 @@
       <span class="ml-auto text-sm font-normal text-gray-500 dark:text-gray-400">{int.to_string(list.length(in_progress_tasks))}</span>
     </h2>
     <div class="space-y-3">
-      {#each in_progress_tasks as task, idx2}
+      {#each in_progress_tasks as task (task.id)}
         <div
           class="bg-white dark:bg-gray-700 p-3 rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow"
           @click={on_task_click(task.id)}
@@ -59,7 +59,7 @@
       <span class="ml-auto text-sm font-normal text-gray-500 dark:text-gray-400">{int.to_string(list.length(done_tasks))}</span>
     </h2>
     <div class="space-y-3">
-      {#each done_tasks as task, idx3}
+      {#each done_tasks as task (task.id)}
         <div
           class="bg-white dark:bg-gray-700 p-3 rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow"
           @click={on_task_click(task.id)}

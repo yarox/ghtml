@@ -98,6 +98,7 @@ pub fn dispatcher_with_each_test() {
         "items",
         "item",
         None,
+        None,
         [Element("li", [], [ExprNode("item", test_span())], test_span())],
         test_span(),
       ),

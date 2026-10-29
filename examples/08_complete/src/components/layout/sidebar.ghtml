@@ -38,7 +38,7 @@
         </button>
       </div>
       <ul class="space-y-1">
-        {#each projects as project, idx}
+        {#each projects as project (project.id)}
           <li>
             <button
               class="w-full flex items-center px-3 py-2 text-sm rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"

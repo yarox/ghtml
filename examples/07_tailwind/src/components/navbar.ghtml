@@ -12,7 +12,7 @@
         <span class="text-white font-bold text-xl">{brand}</span>
       </div>
       <div class="flex items-center space-x-4">
-        {#each items as item, idx}
+        {#each items as item}
           <a
             href={item.href}
             class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"

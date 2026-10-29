@@ -179,7 +179,7 @@ pub fn parse_each_node_test() {
   let assert Ok(template) = parser.parse(input)
 
   case template.body {
-    [EachNode(collection, item, index, body, _)] -> {
+    [EachNode(collection, item, index, _, body, _)] -> {
       should.equal(collection, "items")
       should.equal(item, "item")
       should.equal(index, None)
@@ -194,7 +194,7 @@ pub fn parse_each_with_index_test() {
   let assert Ok(template) = parser.parse(input)
 
   case template.body {
-    [EachNode(_, _, index, _, _)] -> {
+    [EachNode(_, _, index, _, _, _)] -> {
       should.equal(index, Some("i"))
     }
     _ -> should.fail()

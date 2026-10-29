@@ -9,7 +9,7 @@ import ghtml/types.{
   ExprNode, Fragment, IfNode, StaticAttribute, TextNode,
 }
 import gleam/list
-import gleam/option.{Some}
+import gleam/option.{None, Some}
 import gleam/result
 import gleam/string
 
@@ -33,7 +33,7 @@ fn child_nodes(node: Node) -> List(Node) {
     Element(_, _, children, _) -> children
     IfNode(_, then_branch, else_branch, _) ->
       list.append(then_branch, else_branch)
-    EachNode(_, _, _, body, _) -> body
+    EachNode(body: body, ..) -> body
     CaseNode(_, branches, _) ->
       list.flat_map(branches, fn(b: CaseBranch) { b.body })
     Fragment(children, _) -> children
@@ -68,7 +68,9 @@ pub fn template_needs_fragment(nodes: List(Node)) -> Bool {
     case node {
       IfNode(_, then_branch, else_branch, _) ->
         list.length(then_branch) > 1 || list.length(else_branch) > 1
-      EachNode(_, _, _, body, _) -> list.length(body) > 1
+      // Unkeyed loops and multi-node bodies are wrapped in fragment()
+      EachNode(key: None, ..) -> True
+      EachNode(body: body, ..) -> list.length(body) > 1
       CaseNode(_, branches, _) ->
         list.any(branches, fn(b: CaseBranch) { list.length(b.body) > 1 })
       Fragment(_, _) -> True
@@ -107,6 +109,16 @@ pub fn template_has_each(nodes: List(Node)) -> Bool {
   })
 }
 
+/// Check if any each loop has an explicit key (needs `lustre/element/keyed`)
+pub fn template_has_keyed_each(nodes: List(Node)) -> Bool {
+  any_node(nodes, fn(node) {
+    case node {
+      EachNode(key: Some(_), ..) -> True
+      _ -> False
+    }
+  })
+}
+
 /// Check if any nodes have each nodes with index
 pub fn template_has_each_with_index(nodes: List(Node)) -> Bool {
   any_node(nodes, fn(node) {
@@ -115,6 +127,103 @@ pub fn template_has_each_with_index(nodes: List(Node)) -> Bool {
       _ -> False
     }
   })
+}
+
+/// Check if any Gleam expression in the template refers to `module`
+/// (for example `int` in `int.to_string(i)`).
+pub fn template_uses_module(nodes: List(Node), module: String) -> Bool {
+  any_node(nodes, fn(node) {
+    node_expressions(node)
+    |> list.any(fn(expr) { mentions_module(expr, module) })
+  })
+}
+
+/// Check if any Gleam expression in the nodes uses the variable `name`.
+pub fn nodes_use_variable(nodes: List(Node), name: String) -> Bool {
+  any_node(nodes, fn(node) {
+    node_expressions(node)
+    |> list.any(fn(expr) { expression_uses_variable(expr, name) })
+  })
+}
+
+/// True if `name` appears in `expr` as a whole identifier that is not a
+/// field or module member (`x` matches `f(x)`, not `x_y`, `y.x` or `"x"`
+/// is still matched: string contents are not excluded, which only means an
+/// index is kept when in doubt).
+pub fn expression_uses_variable(expr: String, name: String) -> Bool {
+  case string.split(expr, name) {
+    [_] | [] -> False
+    [first, ..rest] -> uses_variable_loop(first, rest)
+  }
+}
+
+fn uses_variable_loop(before: String, rest: List(String)) -> Bool {
+  case rest {
+    [] -> False
+    [after, ..more] -> {
+      let starts_ok = case string.last(before) {
+        Error(_) -> True
+        Ok(char) -> !is_identifier_char(char) && char != "."
+      }
+      let ends_ok = case string.first(after) {
+        Error(_) -> True
+        Ok(char) -> !is_identifier_char(char)
+      }
+      { starts_ok && ends_ok } || uses_variable_loop(after, more)
+    }
+  }
+}
+
+/// The Gleam expressions that belong to a node itself (not its children).
+fn node_expressions(node: Node) -> List(String) {
+  case node {
+    ExprNode(expr, _) -> [expr]
+    EmbedNode(_, expr, _) -> [expr]
+    IfNode(condition, _, _, _) -> [condition]
+    EachNode(collection:, key:, ..) ->
+      case key {
+        Some(key) -> [collection, key]
+        None -> [collection]
+      }
+    CaseNode(expr, branches, _) -> [
+      expr,
+      ..list.map(branches, fn(b: CaseBranch) { b.pattern })
+    ]
+    Element(_, attrs, _, _) ->
+      list.filter_map(attrs, fn(attr) {
+        case attr {
+          DynamicAttribute(_, expr) -> Ok(expr)
+          EventAttribute(_, handler, _) -> Ok(handler)
+          _ -> Error(Nil)
+        }
+      })
+    TextNode(_, _) | Fragment(_, _) -> []
+  }
+}
+
+/// True if `expr` contains `module.` not preceded by an identifier character.
+fn mentions_module(expr: String, module: String) -> Bool {
+  case string.split(expr, module <> ".") {
+    [_] -> False
+    [first, ..rest] -> {
+      // Every piece but the last is followed by an occurrence of `module.`
+      list.take([first, ..rest], list.length(rest))
+      |> list.any(fn(before) {
+        case string.last(before) {
+          Error(_) -> True
+          Ok(char) -> !is_identifier_char(char)
+        }
+      })
+    }
+    [] -> False
+  }
+}
+
+fn is_identifier_char(char: String) -> Bool {
+  string.contains(
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_",
+    char,
+  )
 }
 
 /// Check if any nodes have attributes

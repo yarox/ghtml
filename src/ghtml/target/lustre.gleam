@@ -68,8 +68,12 @@ fn generate_imports(template: Template) -> String {
   let needs_none = codegen_utils.template_needs_none(template.body)
   let needs_fragment = codegen_utils.template_needs_fragment(template.body)
   let needs_each = codegen_utils.template_has_each(template.body)
-  let needs_each_index =
+  let needs_keyed = codegen_utils.template_has_keyed_each(template.body)
+  // Index loops traditionally get gleam/int for free; only import it when
+  // the template actually uses it, so the generated module has no warnings.
+  let needs_int =
     codegen_utils.template_has_each_with_index(template.body)
+    && codegen_utils.template_uses_module(template.body, "int")
   let needs_element = codegen_utils.template_has_custom_elements(template.body)
   let needs_html = codegen_utils.template_has_html_elements(template.body)
   let needs_text = codegen_utils.template_needs_text(template.body)
@@ -102,8 +106,8 @@ fn generate_imports(template: Template) -> String {
     False -> element_import
   }
 
-  // Add keyed import if needed for each loops
-  let base_imports = case needs_each {
+  // Add keyed import if needed for keyed each loops
+  let base_imports = case needs_keyed {
     True -> base_imports <> "\nimport lustre/element/keyed"
     False -> base_imports
   }
@@ -127,8 +131,7 @@ fn generate_imports(template: Template) -> String {
 
   // Add int import if needed for index and not already imported by user
   let imports = case
-    needs_each_index
-    && !codegen_utils.has_user_import(user_imports, "gleam/int")
+    needs_int && !codegen_utils.has_user_import(user_imports, "gleam/int")
   {
     True -> imports <> "\nimport gleam/int"
     False -> imports
@@ -202,8 +205,8 @@ fn generate_node_inline(node: Node) -> String {
     ExprNode(expr, _) -> "text(" <> expr <> ")"
     IfNode(condition, then_branch, else_branch, _) ->
       generate_if_node_inline(condition, then_branch, else_branch)
-    EachNode(collection, item, index, body, _) ->
-      generate_each_node_inline(collection, item, index, body)
+    EachNode(collection, item, index, key, body, _) ->
+      generate_each_node_inline(collection, item, index, key, body)
     CaseNode(expr, branches, _) -> generate_case_node_inline(expr, branches)
     Fragment(children, _) -> generate_fragment_inline(children)
     EmbedNode(EmbedElement, expr, _) -> expr
@@ -417,43 +420,51 @@ fn generate_branch_content(nodes: List(Node)) -> String {
   }
 }
 
-/// Generate code for an each node (keyed with list.map or list.index_map)
+/// Generate code for an each node.
+/// Without a key: `fragment(list.map(...))`. With a key:
+/// `keyed.fragment(list.map(..., fn(item) { #(key, element) }))`.
 fn generate_each_node_inline(
   collection: String,
   item: String,
   index: option.Option(String),
+  key: option.Option(String),
   body: List(Node),
 ) -> String {
   let body_code = generate_branch_content(body)
 
-  case index {
-    None -> {
-      // No index: list.map with keyed.fragment
-      "keyed.fragment(list.map("
-      <> collection
-      <> ", fn("
-      <> item
-      <> ") { #("
-      <> item
-      <> ".id, "
-      <> body_code
-      <> ") }))"
-    }
+  let #(map_function, callback_params) = case index {
+    None -> #("list.map", item)
     Some(idx) -> {
-      // With index: list.index_map with keyed.fragment
-      "keyed.fragment(list.index_map("
-      <> collection
-      <> ", fn("
-      <> item
-      <> ", "
-      <> idx
-      <> ") { #(int.to_string("
-      <> idx
-      <> "), "
-      <> body_code
-      <> ") }))"
+      // Prefix an unused index with `_` so the generated code has no warning
+      let used =
+        codegen_utils.nodes_use_variable(body, idx)
+        || case key {
+          Some(key) -> codegen_utils.expression_uses_variable(key, idx)
+          None -> False
+        }
+      let idx = case used {
+        True -> idx
+        False -> "_" <> idx
+      }
+      #("list.index_map", item <> ", " <> idx)
     }
   }
+
+  let #(wrapper, callback_body) = case key {
+    None -> #("fragment", body_code)
+    Some(key) -> #("keyed.fragment", "#(" <> key <> ", " <> body_code <> ")")
+  }
+
+  wrapper
+  <> "("
+  <> map_function
+  <> "("
+  <> collection
+  <> ", fn("
+  <> callback_params
+  <> ") { "
+  <> callback_body
+  <> " }))"
 }
 
 /// Generate code for a case node

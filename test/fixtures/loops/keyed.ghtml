@@ -1,0 +1,12 @@
+@params(rows: List(#(String, String)), names: List(String))
+
+<ul class="keyed">
+  {#each rows as row (row.0)}
+    <li>{row.1}</li>
+  {/each}
+</ul>
+<ol class="plain">
+  {#each names as name}
+    <li>{name}</li>
+  {/each}
+</ol>

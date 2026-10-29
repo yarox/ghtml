@@ -599,13 +599,14 @@ fn parse_brace_content(
     "#each " <> rest -> {
       let pos = advance_pos_str(pos, "#each ")
       case parse_each_header(rest, pos) {
-        Ok(#(collection, item, index, remaining, end_pos)) -> {
+        Ok(#(collection, item, index, key, remaining, end_pos)) -> {
           let span = Span(start: start_pos, end: end_pos)
           Ok(#(
             EachStart(
               collection: collection,
               item: item,
               index: index,
+              key: key,
               span: span,
             ),
             remaining,
@@ -713,15 +714,22 @@ fn parse_embed(
 fn parse_each_header(
   input: String,
   pos: Position,
-) -> Result(#(String, String, Option(String), String, Position), ParseError) {
+) -> Result(
+  #(String, String, Option(String), Option(String), String, Position),
+  ParseError,
+) {
   // Find " as " to split collection from binding
   case find_as_keyword(input, "", pos) {
     Ok(#(collection, rest, new_pos)) -> {
-      // Parse item and optional index until closing brace
+      // Parse item, optional index and optional key until closing brace
       let #(binding, rest, end_pos) =
         extract_until_close_brace(rest, "", new_pos)
-      let #(item, index) = parse_binding(binding)
-      Ok(#(string.trim(collection), item, index, rest, end_pos))
+      case parse_binding(binding) {
+        Ok(#(item, index, key)) ->
+          Ok(#(string.trim(collection), item, index, key, rest, end_pos))
+        Error(message) ->
+          Error(ParseError(Span(start: new_pos, end: end_pos), message))
+      }
     }
     Error(err) -> Error(err)
   }
@@ -772,11 +780,66 @@ fn extract_until_close_brace(
   }
 }
 
-fn parse_binding(binding: String) -> #(String, Option(String)) {
+/// Parse the binding part of `{#each}`: `item`, `item, index`, with an
+/// optional key in parentheses at the end: `item (key)` or `item, i (key)`.
+/// The item can be a pattern such as `#(a, b)`.
+fn parse_binding(
+  binding: String,
+) -> Result(#(String, Option(String), Option(String)), String) {
   let binding = string.trim(binding)
-  case string.split_once(binding, ",") {
-    Ok(#(item, index)) -> #(string.trim(item), Some(string.trim(index)))
-    Error(_) -> #(binding, None)
+  let #(binding, key) = split_key(binding)
+  case key {
+    Some("") -> Error("Expected a key expression inside ( ) in {#each}")
+    _ -> {
+      let #(item, index) = case split_top_level_comma(binding) {
+        Ok(#(item, index)) -> #(string.trim(item), Some(string.trim(index)))
+        Error(_) -> #(binding, None)
+      }
+      Ok(#(item, index, key))
+    }
+  }
+}
+
+/// Split a trailing ` (key)` group from an each binding. A group is a key
+/// only when whitespace comes before it, so `#(a, b)` stays a pattern.
+fn split_key(binding: String) -> #(String, Option(String)) {
+  case string.ends_with(binding, ")") {
+    False -> #(binding, None)
+    True -> {
+      let chars = string.to_graphemes(binding) |> list.reverse
+      case find_group_start(chars, 0, []) {
+        Ok(#(inner, [" ", ..before])) -> #(
+          string.trim_end(string.concat(list.reverse(before))),
+          Some(string.trim(string.concat(inner))),
+        )
+        _ -> #(binding, None)
+      }
+    }
+  }
+}
+
+/// Walk reversed graphemes back to the `(` that opens the final group.
+/// Returns the group's inner graphemes (in order) and the reversed rest.
+fn find_group_start(
+  reversed: List(String),
+  depth: Int,
+  inner: List(String),
+) -> Result(#(List(String), List(String)), Nil) {
+  case reversed {
+    [] -> Error(Nil)
+    [")", ..rest] if depth == 0 -> find_group_start(rest, 1, inner)
+    [")", ..rest] -> find_group_start(rest, depth + 1, [")", ..inner])
+    ["(", ..rest] if depth == 1 -> Ok(#(inner, rest))
+    ["(", ..rest] -> find_group_start(rest, depth - 1, ["(", ..inner])
+    [char, ..rest] -> find_group_start(rest, depth, [char, ..inner])
+  }
+}
+
+/// Split at the first comma that is not inside brackets.
+fn split_top_level_comma(input: String) -> Result(#(String, String), Nil) {
+  case split_params(input, [], "", 0) {
+    [first, ..rest] if rest != [] -> Ok(#(first, string.join(rest, ",")))
+    _ -> Error(Nil)
   }
 }
 

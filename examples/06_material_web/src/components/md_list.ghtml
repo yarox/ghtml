@@ -3,7 +3,7 @@
 @params(items: List(ListItem))
 
 <md-list>
-  {#each items as item, idx}
+  {#each items as item}
     <md-list-item>
       <span slot="headline">{item.headline}</span>
       <span slot="supporting-text">{item.supporting}</span>

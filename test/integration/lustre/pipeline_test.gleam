@@ -115,7 +115,7 @@ pub fn nested_control_flow_test() {
 
   // Should have both if and each constructs
   should.be_true(string.contains(code, "case show {"))
-  should.be_true(string.contains(code, "keyed.fragment("))
+  should.be_true(string.contains(code, "fragment(list."))
 }
 
 pub fn self_closing_tags_test() {
@@ -282,7 +282,7 @@ pub fn full_example_from_plan_test() {
   should.be_true(string.contains(code, "Admin ->"))
   should.be_true(string.contains(code, "Member(since) ->"))
   should.be_true(string.contains(code, "case show_email {"))
-  should.be_true(string.contains(code, "keyed.fragment("))
+  should.be_true(string.contains(code, "fragment(list."))
 
   // Events
   should.be_true(string.contains(code, "event.on_input(on_email_change)"))
@@ -337,7 +337,7 @@ pub fn dispatcher_with_complex_template_test() {
 
   // Verify all features work through the dispatcher
   should.be_true(string.contains(code, "case show {"))
-  should.be_true(string.contains(code, "keyed.fragment("))
+  should.be_true(string.contains(code, "fragment(list."))
   should.be_true(string.contains(code, "event.on_click(on_click())"))
   should.be_true(string.contains(code, "attribute.class(\"container\")"))
 }

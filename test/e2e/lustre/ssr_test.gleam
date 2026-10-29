@@ -11,6 +11,7 @@ import e2e/lustre/generated/control_flow
 import e2e/lustre/generated/custom_elements
 import e2e/lustre/generated/edge_cases
 import e2e/lustre/generated/fragments
+import e2e/lustre/generated/loops
 import e2e/lustre/generated/types.{Active, Inactive, User}
 import gleam/string
 import gleeunit/should
@@ -340,8 +341,8 @@ pub fn fragments_renders_items_in_paragraphs_test() {
   let items = ["Content"]
   fragments.render(items)
   |> element.to_string()
-  // Keyed elements have data-lustre-key attribute, so check for <p with space
-  |> string.contains("<p ")
+  |> without_fragment_markers()
+  |> string.contains("<main class=\"main\"><p>Content</p></main>")
   |> should.be_true()
 }
 
@@ -437,5 +438,37 @@ pub fn composition_renders_empty_element_list_test() {
   |> element.to_string()
   |> without_fragment_markers()
   |> string.contains("<main><h1>Empty</h1></main>")
+  |> should.be_true()
+}
+
+// =============================================================================
+// Loop Tests ({#each} with and without keys)
+// =============================================================================
+
+fn render_loops() -> String {
+  loops.render([#("a", "Alpha"), #("b", "Beta")], ["x", "y"])
+  |> element.to_string()
+  |> without_fragment_markers()
+}
+
+pub fn loops_keyed_renders_items_with_keys_test() {
+  render_loops()
+  |> string.contains(
+    "<ul class=\"keyed\"><li data-lustre-key=\"a\">Alpha</li><li data-lustre-key=\"b\">Beta</li></ul>",
+  )
+  |> should.be_true()
+}
+
+pub fn loops_unkeyed_list_of_strings_test() {
+  render_loops()
+  |> string.contains("<ol class=\"plain\"><li>x</li><li>y</li></ol>")
+  |> should.be_true()
+}
+
+pub fn loops_empty_lists_test() {
+  loops.render([], [])
+  |> element.to_string()
+  |> without_fragment_markers()
+  |> string.contains("<ul class=\"keyed\"></ul><ol class=\"plain\"></ol>")
   |> should.be_true()
 }

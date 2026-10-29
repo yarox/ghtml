@@ -397,7 +397,7 @@ pub fn tokenize_each_test() {
   let assert Ok(tokens) = lexer.tokenize(input)
 
   case list.first(tokens) {
-    Ok(EachStart(collection, item, index, _)) -> {
+    Ok(EachStart(collection, item, index, _, _)) -> {
       should.equal(collection, "items")
       should.equal(item, "item")
       should.equal(index, None)
@@ -411,7 +411,7 @@ pub fn tokenize_each_with_index_test() {
   let assert Ok(tokens) = lexer.tokenize(input)
 
   case list.first(tokens) {
-    Ok(EachStart(collection, item, index, _)) -> {
+    Ok(EachStart(collection, item, index, _, _)) -> {
       should.equal(collection, "items")
       should.equal(item, "item")
       should.equal(index, Some("i"))

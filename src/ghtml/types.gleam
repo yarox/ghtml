@@ -43,7 +43,13 @@ pub type Token {
   IfStart(condition: String, span: Span)
   Else(span: Span)
   IfEnd(span: Span)
-  EachStart(collection: String, item: String, index: Option(String), span: Span)
+  EachStart(
+    collection: String,
+    item: String,
+    index: Option(String),
+    key: Option(String),
+    span: Span,
+  )
   EachEnd(span: Span)
   CaseStart(expr: String, span: Span)
   CasePattern(pattern: String, span: Span)
@@ -75,6 +81,7 @@ pub type Node {
     collection: String,
     item: String,
     index: Option(String),
+    key: Option(String),
     body: List(Node),
     span: Span,
   )

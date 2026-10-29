@@ -141,6 +141,7 @@ pub fn generate_each_without_index_test() {
         collection: "items",
         item: "item",
         index: None,
+        key: None,
         body: [
           Element("li", [], [ExprNode("item.name", test_span())], test_span()),
         ],
@@ -150,7 +151,7 @@ pub fn generate_each_without_index_test() {
 
   let code = lustre.generate(template, "test.ghtml", "abc123")
 
-  should.be_true(string.contains(code, "keyed.fragment("))
+  should.be_true(string.contains(code, "fragment(list."))
   should.be_true(string.contains(code, "list.map(items"))
   should.be_true(string.contains(code, "fn(item)"))
 }
@@ -162,6 +163,7 @@ pub fn generate_each_with_index_test() {
         collection: "items",
         item: "item",
         index: Some("i"),
+        key: None,
         body: [
           Element("li", [], [ExprNode("item", test_span())], test_span()),
         ],
@@ -171,9 +173,10 @@ pub fn generate_each_with_index_test() {
 
   let code = lustre.generate(template, "test.ghtml", "abc123")
 
-  should.be_true(string.contains(code, "keyed.fragment("))
+  should.be_true(string.contains(code, "fragment(list."))
   should.be_true(string.contains(code, "list.index_map(items"))
-  should.be_true(string.contains(code, "fn(item, i)"))
+  // The index is not used in the body, so it is prefixed with `_`
+  should.be_true(string.contains(code, "fn(item, _i)"))
 }
 
 pub fn generate_each_with_complex_body_test() {
@@ -183,6 +186,7 @@ pub fn generate_each_with_complex_body_test() {
         collection: "users",
         item: "user",
         index: None,
+        key: None,
         body: [
           Element(
             "div",
@@ -222,6 +226,7 @@ pub fn generate_nested_each_test() {
         collection: "groups",
         item: "group",
         index: None,
+        key: None,
         body: [
           Element(
             "div",
@@ -231,6 +236,7 @@ pub fn generate_nested_each_test() {
                 collection: "group.items",
                 item: "item",
                 index: None,
+                key: None,
                 body: [Element("span", [], [], test_span())],
                 span: test_span(),
               ),
@@ -244,10 +250,10 @@ pub fn generate_nested_each_test() {
 
   let code = lustre.generate(template, "test.ghtml", "abc123")
 
-  // Should have nested keyed/list.map
-  let keyed_count = string.split(code, "keyed.fragment(") |> list.length()
-  should.be_true(keyed_count >= 3)
-  // At least 2 keyed.fragment calls
+  // Should have nested fragment(list.map(...)) calls
+  let loop_count = string.split(code, "fragment(list.map(") |> list.length()
+  // At least 2 loops (split gives count + 1 pieces)
+  should.be_true(loop_count >= 3)
 }
 
 // === Case Node Tests ===
@@ -368,6 +374,7 @@ pub fn generate_if_inside_each_test() {
         collection: "items",
         item: "item",
         index: None,
+        key: None,
         body: [
           IfNode(
             condition: "item.visible",
