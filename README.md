@@ -278,6 +278,11 @@ Insert other elements (another template, a `children` parameter, `element.map(..
 
 <!-- Boolean attributes -->
 <input disabled required />
+<button disabled={is_busy}>Save</button>  <!-- Bool -->
+
+<!-- style, width, height: plain strings -->
+<div style="color: red" />
+<img width="24" height={size} />
 
 <!-- Events -->
 <button @click={on_submit}>Submit</button>

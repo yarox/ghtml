@@ -12,6 +12,7 @@ import e2e/lustre/generated/custom_elements
 import e2e/lustre/generated/edge_cases
 import e2e/lustre/generated/fragments
 import e2e/lustre/generated/loops
+import e2e/lustre/generated/typed_attributes
 import e2e/lustre/generated/types.{Active, Inactive, User}
 import gleam/string
 import gleeunit/should
@@ -470,5 +471,43 @@ pub fn loops_empty_lists_test() {
   |> element.to_string()
   |> without_fragment_markers()
   |> string.contains("<ul class=\"keyed\"></ul><ol class=\"plain\"></ol>")
+  |> should.be_true()
+}
+
+// =============================================================================
+// Attribute typing (style, width/height, boolean attributes with values)
+// =============================================================================
+
+fn render_typed(busy: Bool) -> String {
+  typed_attributes.render("margin: 0", "16", busy)
+  |> element.to_string()
+}
+
+pub fn typed_static_style_test() {
+  render_typed(False)
+  |> string.contains("style=\"color: red\"")
+  |> should.be_true()
+}
+
+pub fn typed_width_and_height_test() {
+  let html = render_typed(False)
+  should.be_true(string.contains(html, "width=\"24\""))
+  should.be_true(string.contains(html, "height=\"16\""))
+}
+
+pub fn typed_boolean_with_value_test() {
+  render_typed(False)
+  |> string.contains("<input disabled")
+  |> should.be_true()
+}
+
+pub fn typed_dynamic_boolean_test() {
+  should.be_true(string.contains(render_typed(True), "<button disabled"))
+  should.be_false(string.contains(render_typed(False), "<button disabled"))
+}
+
+pub fn typed_dynamic_style_test() {
+  render_typed(False)
+  |> string.contains("style=\"margin: 0\"")
   |> should.be_true()
 }

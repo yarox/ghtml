@@ -1,0 +1,7 @@
+@params(css: String, size: String, busy: Bool)
+
+<div style="color: red" class="typed">
+  <img src="/a.png" alt="a" width="24" height={size} />
+  <input disabled="disabled" />
+  <button disabled={busy} style={css}>Go</button>
+</div>

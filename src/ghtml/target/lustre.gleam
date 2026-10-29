@@ -17,7 +17,11 @@ import gleam/option.{None, Some}
 import gleam/result
 import gleam/string
 
-/// Known HTML attributes that have dedicated Lustre functions
+/// Known HTML attributes that have dedicated Lustre functions.
+/// Attributes whose Lustre function does not take a single String
+/// (`style`, `width`, `height`) are left out on purpose: they use
+/// `attribute.attribute(name, value)`. Boolean attributes are also listed in
+/// `boolean_attributes`; their functions take a Bool.
 const known_attributes = [
   #("class", "attribute.class"),
   #("id", "attribute.id"),
@@ -35,9 +39,6 @@ const known_attributes = [
   #("autofocus", "attribute.autofocus"),
   #("for", "attribute.for"),
   #("role", "attribute.role"),
-  #("style", "attribute.style"),
-  #("width", "attribute.width"),
-  #("height", "attribute.height"),
   #("title", "attribute.title"),
   #("target", "attribute.target"),
   #("rel", "attribute.rel"),
@@ -275,7 +276,12 @@ fn generate_attr(attr: Attribute, is_custom: Bool) -> String {
 
 /// Generate code for a static attribute
 fn generate_static_attr(name: String, value: String) -> String {
-  case find_attr_function(name) {
+  // A boolean attribute with a written value: its function takes a Bool
+  let lookup = case list.contains(boolean_attributes, name) {
+    True -> Error(Nil)
+    False -> find_attr_function(name)
+  }
+  case lookup {
     Ok(func) -> func <> "(\"" <> codegen_utils.escape_string(value) <> "\")"
     Error(_) ->
       "attribute.attribute(\""
