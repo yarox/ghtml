@@ -9,8 +9,8 @@ import ghtml/codegen_utils
 import ghtml/types.{
   type Attribute, type CaseBranch, type Node, type Template, BooleanAttribute,
   CaseNode, DynamicAttribute, EachNode, Element, EmbedElement, EmbedElements,
-  EmbedNode, EventAttribute, ExprNode, Fragment, IfNode, StaticAttribute,
-  TextNode,
+  EmbedHtml, EmbedNode, EventAttribute, ExprNode, Fragment, IfNode,
+  StaticAttribute, TextNode,
 }
 import gleam/list
 import gleam/option.{None, Some}
@@ -75,8 +75,14 @@ fn generate_imports(template: Template) -> String {
   let needs_int =
     codegen_utils.template_has_each_with_index(template.body)
     && codegen_utils.template_uses_module(template.body, "int")
-  let needs_element = codegen_utils.template_has_custom_elements(template.body)
-  let needs_html = codegen_utils.template_has_html_elements(template.body)
+  let needs_element =
+    uses_element_constructor(template.body, Html, fn(tag) {
+      codegen_utils.is_custom_element(tag)
+    })
+  let needs_html =
+    uses_element_constructor(template.body, Html, fn(tag) {
+      !codegen_utils.is_custom_element(tag)
+    })
   let needs_text = codegen_utils.template_needs_text(template.body)
   let user_imports = template.imports
 
@@ -96,6 +102,10 @@ fn generate_imports(template: Template) -> String {
   }
   let element_items = case template_has_svg_children(template.body) {
     True -> list.append(element_items, ["namespaced"])
+    False -> element_items
+  }
+  let element_items = case template_has_raw_html(template.body) {
+    True -> list.append(element_items, ["unsafe_raw_html"])
     False -> element_items
   }
   let element_items = case needs_fragment {
@@ -154,6 +164,54 @@ fn generate_imports(template: Template) -> String {
   }
 
   imports
+}
+
+/// Check if code generation will emit an HTML-namespace element whose tag
+/// matches `matches` (html.tag(...) for standard tags, element(...) for
+/// custom ones). Elements in the SVG namespace and elements whose content is
+/// `{@html}` use other functions, so they do not count.
+fn uses_element_constructor(
+  nodes: List(Node),
+  ns: Namespace,
+  matches: fn(String) -> Bool,
+) -> Bool {
+  list.any(nodes, fn(node) {
+    case node {
+      Element(tag, _, children, _) -> {
+        let is_raw = case children {
+          [EmbedNode(EmbedHtml, _, _)] -> True
+          _ -> False
+        }
+        let child_ns = case ns, tag {
+          Html, "svg" -> Svg
+          Svg, "foreignObject" -> Html
+          _, _ -> ns
+        }
+        { ns == Html && !is_raw && matches(tag) }
+        || uses_element_constructor(children, child_ns, matches)
+      }
+      IfNode(_, then_branch, else_branch, _) ->
+        uses_element_constructor(then_branch, ns, matches)
+        || uses_element_constructor(else_branch, ns, matches)
+      EachNode(body: body, ..) -> uses_element_constructor(body, ns, matches)
+      CaseNode(_, branches, _) ->
+        list.any(branches, fn(b: CaseBranch) {
+          uses_element_constructor(b.body, ns, matches)
+        })
+      Fragment(children, _) -> uses_element_constructor(children, ns, matches)
+      TextNode(..) | ExprNode(..) | EmbedNode(..) -> False
+    }
+  })
+}
+
+/// Check if the template uses `{@html}`
+fn template_has_raw_html(nodes: List(Node)) -> Bool {
+  codegen_utils.any_node(nodes, fn(node) {
+    case node {
+      EmbedNode(EmbedHtml, _, _) -> True
+      _ -> False
+    }
+  })
 }
 
 /// Check if any `<svg>` element has element children (they need
@@ -235,6 +293,10 @@ fn generate_node_inline(node: Node, ns: Namespace) -> String {
     Fragment(children, _) -> generate_fragment_inline(children, ns)
     EmbedNode(EmbedElement, expr, _) -> expr
     EmbedNode(EmbedElements, expr, _) -> "fragment(" <> expr <> ")"
+    // The parser only allows {@html} as the only child of an element, where
+    // generate_element_inline handles it. This branch is a safe fallback.
+    EmbedNode(EmbedHtml, expr, _) ->
+      "unsafe_raw_html(\"\", \"span\", [], " <> expr <> ")"
   }
 }
 
@@ -254,8 +316,24 @@ fn generate_element_inline(
   children: List(Node),
   ns: Namespace,
 ) -> String {
-  case ns {
-    Svg -> {
+  case children, ns {
+    // {@html expr}: the element's content is raw HTML
+    [EmbedNode(EmbedHtml, expr, _)], _ -> {
+      let #(namespace, is_generic) = case ns, tag {
+        Svg, _ | Html, "svg" -> #(svg_namespace, True)
+        Html, _ -> #("", codegen_utils.is_custom_element(tag))
+      }
+      "unsafe_raw_html(\""
+      <> namespace
+      <> "\", \""
+      <> tag
+      <> "\", "
+      <> generate_attrs(attrs, is_generic)
+      <> ", "
+      <> expr
+      <> ")"
+    }
+    _, Svg -> {
       // Lustre's svg module has fixed arities and snake_case names, so the
       // generic namespaced() keeps tag names (linearGradient) and children.
       let children_ns = case tag {
@@ -272,7 +350,7 @@ fn generate_element_inline(
       <> generate_children_inline(children, children_ns)
       <> "])"
     }
-    Html -> generate_html_element(tag, attrs, children)
+    _, Html -> generate_html_element(tag, attrs, children)
   }
 }
 

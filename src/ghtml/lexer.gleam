@@ -6,9 +6,9 @@
 import ghtml/types.{
   type Attribute, type EmbedKind, type ParseError, type Position, type Token,
   BooleanAttribute, CaseEnd, CasePattern, CaseStart, DynamicAttribute, EachEnd,
-  EachStart, Else, Embed, EmbedElement, EmbedElements, EventAttribute, Expr,
-  HtmlClose, HtmlOpen, IfEnd, IfStart, Import, Params, ParseError, Position,
-  Span, StaticAttribute, Text,
+  EachStart, Else, Embed, EmbedElement, EmbedElements, EmbedHtml, EventAttribute,
+  Expr, HtmlClose, HtmlOpen, IfEnd, IfStart, Import, Params, ParseError,
+  Position, Span, StaticAttribute, Text,
 }
 import gleam/list
 import gleam/option.{type Option, None, Some}
@@ -659,7 +659,8 @@ fn parse_brace_content(
       Ok(#(CaseEnd(span: span), rest, end_pos))
     }
 
-    // Embed directives: {@element expr}, {@elements expr}
+    // Embed directives: {@element expr}, {@elements expr}, {@html expr}
+    "@html " <> rest -> parse_embed(EmbedHtml, "@html", rest, start_pos, pos)
     "@elements " <> rest ->
       parse_embed(EmbedElements, "@elements", rest, start_pos, pos)
     "@element " <> rest ->
@@ -671,7 +672,7 @@ fn parse_brace_content(
         Span(start: start_pos, end: pos),
         "Unknown directive {@"
           <> name
-          <> "}. Expected {@element expr} or {@elements expr}",
+          <> "}. Expected {@element expr}, {@elements expr} or {@html expr}",
       ))
     }
 

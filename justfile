@@ -403,7 +403,8 @@ e2e-regen:
                    test/fixtures/composition/layout.ghtml \
                    test/fixtures/loops/keyed.ghtml \
                    test/fixtures/attributes/typed.ghtml \
-                   test/fixtures/svg/icon.ghtml; do
+                   test/fixtures/svg/icon.ghtml \
+                   test/fixtures/raw_html/content.ghtml; do
         echo "  Processing: $fixture"
         # The generator outputs alongside source, so we need to process after
     done
@@ -423,6 +424,7 @@ e2e-regen:
     cp test/fixtures/loops/keyed.gleam test/e2e/lustre/generated/loops.gleam 2>/dev/null || true
     cp test/fixtures/attributes/typed.gleam test/e2e/lustre/generated/typed_attributes.gleam 2>/dev/null || true
     cp test/fixtures/svg/icon.gleam test/e2e/lustre/generated/svg_icon.gleam 2>/dev/null || true
+    cp test/fixtures/raw_html/content.gleam test/e2e/lustre/generated/raw_html.gleam 2>/dev/null || true
 
     # Clean up generated files from fixtures directory
     rm -f test/fixtures/simple/basic.gleam
@@ -435,6 +437,7 @@ e2e-regen:
     rm -f test/fixtures/loops/keyed.gleam
     rm -f test/fixtures/attributes/typed.gleam
     rm -f test/fixtures/svg/icon.gleam
+    rm -f test/fixtures/raw_html/content.gleam
 
     # Fix import paths for generated modules (types -> e2e/lustre/generated/types)
     # Use platform-specific sed syntax (macOS vs Linux)

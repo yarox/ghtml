@@ -235,6 +235,20 @@ Insert other elements (another template, a `children` parameter, `element.map(..
 </details>
 
 <details>
+<summary><strong>⚠️ Raw HTML</strong></summary>
+
+`{@html expr}` renders a `String` as HTML, without escaping. It must be the only child of an element:
+
+```html
+<article class="post">{@html rendered_markdown}</article>
+<svg viewBox="0 0 24 24">{@html icon_paths}</svg>
+```
+
+It generates `element.unsafe_raw_html(...)`. Only use it with trusted HTML.
+
+</details>
+
+<details>
 <summary><strong>🔀 Control Flow</strong></summary>
 
 ```html

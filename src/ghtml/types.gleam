@@ -64,6 +64,9 @@ pub type EmbedKind {
   EmbedElement
   /// `{@elements expr}`: `expr` is a `List(Element(msg))`
   EmbedElements
+  /// `{@html expr}`: `expr` is a `String` of raw HTML, rendered as the
+  /// content of the parent element (it must be the only child)
+  EmbedHtml
 }
 
 /// AST Node representing parsed template structure

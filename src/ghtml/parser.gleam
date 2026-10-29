@@ -60,10 +60,46 @@ pub fn parse(input: String) -> ParseResult(Template) {
       let #(imports, params, body_tokens) = extract_metadata(tokens)
       case build_ast(body_tokens) {
         Error(errors) -> Error(errors)
-        Ok(body) -> Ok(Template(imports, params, body))
+        Ok(body) ->
+          case check_raw_html(body, False) {
+            [] -> Ok(Template(imports, params, body))
+            errors -> Error(errors)
+          }
       }
     }
   }
+}
+
+// === Validation ===
+
+/// `{@html expr}` replaces the content of its parent element, so it must be
+/// the only child of an element. `allowed` is True when `nodes` are the
+/// children of an element with exactly one child.
+fn check_raw_html(nodes: List(Node), allowed: Bool) -> List(ParseError) {
+  list.flat_map(nodes, fn(node) {
+    case node {
+      types.EmbedNode(types.EmbedHtml, _, span) if !allowed -> [
+        ParseError(
+          span,
+          "{@html} must be the only child of an element, for example <div>{@html content}</div>",
+        ),
+      ]
+      types.EmbedNode(..) | TextNode(..) | ExprNode(..) -> []
+      Element(children: children, ..) ->
+        check_raw_html(children, list.length(children) == 1)
+      IfNode(then_branch: then_branch, else_branch: else_branch, ..) ->
+        list.append(
+          check_raw_html(then_branch, False),
+          check_raw_html(else_branch, False),
+        )
+      EachNode(body: body, ..) -> check_raw_html(body, False)
+      CaseNode(branches: branches, ..) ->
+        list.flat_map(branches, fn(branch: CaseBranch) {
+          check_raw_html(branch.body, False)
+        })
+      types.Fragment(children: children, ..) -> check_raw_html(children, False)
+    }
+  })
 }
 
 // === Metadata Extraction ===

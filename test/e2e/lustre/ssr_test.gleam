@@ -12,6 +12,7 @@ import e2e/lustre/generated/custom_elements
 import e2e/lustre/generated/edge_cases
 import e2e/lustre/generated/fragments
 import e2e/lustre/generated/loops
+import e2e/lustre/generated/raw_html
 import e2e/lustre/generated/svg_icon
 import e2e/lustre/generated/typed_attributes
 import e2e/lustre/generated/types.{Active, Inactive, User}
@@ -552,5 +553,29 @@ pub fn svg_foreign_object_holds_html_test() {
   |> string.contains(
     "<p xmlns=\"http://www.w3.org/1999/xhtml\" class=\"note\">hi</p>",
   )
+  |> should.be_true()
+}
+
+// =============================================================================
+// Raw HTML Tests ({@html})
+// =============================================================================
+
+fn render_raw() -> String {
+  raw_html.render("<p>Hello <em>world</em></p>", "<circle r=\"4\"></circle>")
+  |> element.to_string()
+  |> without_fragment_markers()
+}
+
+pub fn raw_html_is_not_escaped_test() {
+  render_raw()
+  |> string.contains(
+    "<article class=\"post\"><p>Hello <em>world</em></p></article>",
+  )
+  |> should.be_true()
+}
+
+pub fn raw_html_inside_svg_test() {
+  render_raw()
+  |> string.contains("viewBox=\"0 0 10 10\"><circle r=\"4\"></circle></svg>")
   |> should.be_true()
 }

@@ -99,7 +99,7 @@ All shared types are defined here:
 - **Token** - Lexer output (Import, Params, HtmlOpen, IfStart, etc.)
 - **Attribute** - Attribute variants (StaticAttribute, DynamicAttribute, EventAttribute with modifiers: List(String), BooleanAttribute)
 - **Node** - AST nodes (Element, TextNode, ExprNode, IfNode, EachNode, CaseNode, Fragment, EmbedNode)
-- **EmbedKind** - What an embed directive inserts (EmbedElement for `{@element}`, EmbedElements for `{@elements}`)
+- **EmbedKind** - What an embed directive inserts (EmbedElement for `{@element}`, EmbedElements for `{@elements}`, EmbedHtml for `{@html}`, which the parser only allows as the only child of an element)
 - **Template** - Final parsed result with imports, params, and body nodes
 - **Target** - Code generation target backend (currently: Lustre). Includes `target_from_string()` and `valid_target_names()`.
 

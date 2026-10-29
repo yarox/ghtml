@@ -99,3 +99,9 @@ pub fn svg_events_work_on_children_test() {
   let code = generate("<svg><circle @click={on_pick} /></svg>")
   should.be_true(string.contains(code, "event.on_click(on_pick)"))
 }
+
+pub fn svg_custom_like_child_does_not_import_element_test() {
+  let code = generate("<svg><font-face /></svg>")
+  should.be_false(string.contains(element_import(code), " element,"))
+  should.be_false(string.contains(element_import(code), " element}"))
+}
