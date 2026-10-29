@@ -1,18 +1,490 @@
 // @generated from task_detail.ghtml
-// @hash 3f70c512e6a64b496b565d068e86e5259cf4e5e6a038dad1b6ab56951d6c3b90
+// @hash c149f8245bde8f033fb080be93b2821f9ed94d3e5d650313e2d3f0813c263e30
 // DO NOT EDIT - regenerate with: gleam run -m ghtml
 
-import lustre/element.{type Element, text, element, none, fragment}
-import lustre/element/html
-import lustre/element/keyed
-import lustre/attribute
-import lustre/event
+import gleam/dynamic/decode
 import gleam/int
 import gleam/list
-import gleam/option.{type Option, Some, None}
-import model.{type Task, Todo, InProgress, Done, High, Medium, Low, NoPriority, completed_subtasks}
-import gleam/dynamic/decode
+import gleam/option.{type Option, None, Some}
+import lustre/attribute
+import lustre/element.{type Element, element, fragment, none, text}
+import lustre/element/html
+import lustre/element/keyed
+import lustre/event
+import model.{
+  type Task, Done, High, InProgress, Low, Medium, NoPriority, Todo,
+  completed_subtasks,
+}
 
-pub fn render(task: Task, new_subtask_text: String, editing_subtask_id: Option(String), editing_subtask_text: String, on_edit: fn() -> msg, on_delete: fn() -> msg, on_set_status: decode.Decoder(msg), on_set_priority: decode.Decoder(msg), on_toggle_subtask: fn(String) -> msg, on_subtask_input: decode.Decoder(msg), on_add_subtask_keydown: decode.Decoder(msg), on_add_subtask_click: fn() -> msg, on_delete_subtask: fn(String) -> msg, on_start_edit_subtask: fn(String, String) -> msg, on_edit_subtask_input: decode.Decoder(msg), on_save_edit_subtask: fn(String) -> msg, on_cancel_edit_subtask: fn() -> msg, on_close: fn() -> msg, project_name: Option(String)) -> Element(msg) {
-  html.div([attribute.class("bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6")], [html.div([attribute.class("flex items-start justify-between mb-4")], [html.div([], [html.h2([attribute.class("text-xl font-semibold text-gray-900 dark:text-white")], [text(task.title)]), html.div([attribute.class("mt-2 flex items-center gap-2")], [element("sl-select", [attribute.attribute("size", "small"), attribute.value(case task.status { Todo -> "todo" InProgress -> "in_progress" Done -> "done" }), event.on("sl-change", on_set_status)], [case task.status { Todo -> html.span([attribute.attribute("slot", "prefix"), attribute.class("w-2 h-2 rounded-full bg-gray-400 inline-block")], []) InProgress -> html.span([attribute.attribute("slot", "prefix"), attribute.class("w-2 h-2 rounded-full bg-blue-500 inline-block")], []) Done -> html.span([attribute.attribute("slot", "prefix"), attribute.class("w-2 h-2 rounded-full bg-green-500 inline-block")], []) }, element("sl-option", [attribute.value("todo")], [html.span([attribute.attribute("slot", "prefix"), attribute.class("w-2 h-2 rounded-full bg-gray-400 inline-block")], []), text("Todo")]), element("sl-option", [attribute.value("in_progress")], [html.span([attribute.attribute("slot", "prefix"), attribute.class("w-2 h-2 rounded-full bg-blue-500 inline-block")], []), text("In Progress")]), element("sl-option", [attribute.value("done")], [html.span([attribute.attribute("slot", "prefix"), attribute.class("w-2 h-2 rounded-full bg-green-500 inline-block")], []), text("Done")])]), element("sl-select", [attribute.attribute("size", "small"), attribute.value(case task.priority { High -> "high" Medium -> "medium" Low -> "low" NoPriority -> "none" }), event.on("sl-change", on_set_priority)], [case task.priority { High -> html.span([attribute.attribute("slot", "prefix"), attribute.class("w-2 h-2 rounded-full bg-red-500 inline-block")], []) Medium -> html.span([attribute.attribute("slot", "prefix"), attribute.class("w-2 h-2 rounded-full bg-orange-500 inline-block")], []) Low -> html.span([attribute.attribute("slot", "prefix"), attribute.class("w-2 h-2 rounded-full bg-purple-500 inline-block")], []) NoPriority -> html.span([attribute.attribute("slot", "prefix"), attribute.class("w-2 h-2 rounded-full bg-slate-400 dark:bg-slate-500 inline-block")], []) }, element("sl-option", [attribute.value("none")], [html.span([attribute.attribute("slot", "prefix"), attribute.class("w-2 h-2 rounded-full bg-slate-400 dark:bg-slate-500 inline-block")], []), text("No Priority")]), element("sl-option", [attribute.value("low")], [html.span([attribute.attribute("slot", "prefix"), attribute.class("w-2 h-2 rounded-full bg-purple-500 inline-block")], []), text("Low")]), element("sl-option", [attribute.value("medium")], [html.span([attribute.attribute("slot", "prefix"), attribute.class("w-2 h-2 rounded-full bg-orange-500 inline-block")], []), text("Medium")]), element("sl-option", [attribute.value("high")], [html.span([attribute.attribute("slot", "prefix"), attribute.class("w-2 h-2 rounded-full bg-red-500 inline-block")], []), text("High")])])])]), html.button([attribute.class("text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"), event.on_click(on_close())], [html.span([attribute.class("text-xl")], [text("X")])])]), case project_name { Some(name) -> html.div([attribute.class("mb-4")], [html.h3([attribute.class("text-sm font-medium text-gray-700 dark:text-gray-300 mb-1")], [text("Project")]), html.p([attribute.class("text-gray-600 dark:text-gray-400")], [text(name)])]) None -> html.span([], []) }, case task.description != "" { True -> html.div([attribute.class("mb-4")], [html.h3([attribute.class("text-sm font-medium text-gray-700 dark:text-gray-300 mb-1")], [text("Description")]), html.p([attribute.class("text-gray-600 dark:text-gray-400")], [text(task.description)])]) False -> none() }, case task.due_date { Some(date) -> html.div([attribute.class("mb-4")], [html.h3([attribute.class("text-sm font-medium text-gray-700 dark:text-gray-300 mb-1")], [text("Due Date")]), html.p([attribute.class("text-gray-600 dark:text-gray-400")], [text(date)])]) None -> html.span([], []) }, html.div([attribute.class("mb-4")], [html.h3([attribute.class("text-sm font-medium text-gray-700 dark:text-gray-300 mb-2")], [text("\n Subtasks\n "), case task.subtasks != [] { True -> fragment([text("\n ("), text(int.to_string(completed_subtasks(task))), text("/"), text(int.to_string(list.length(task.subtasks))), text(")\n ")]) False -> none() }]), case task.subtasks != [] { True -> html.ul([attribute.class("space-y-2 mb-3")], [keyed.fragment(list.map(task.subtasks, fn(subtask) { #(subtask.id, html.li([attribute.class("flex items-center gap-2")], [case editing_subtask_id == Some(subtask.id) { True -> fragment([element("sl-input", [attribute.attribute("size", "small"), attribute.class("flex-1"), attribute.value(editing_subtask_text), event.on("sl-input", on_edit_subtask_input), attribute.attribute("autofocus", "")], []), element("sl-icon-button", [attribute.name("check"), attribute.attribute("label", "Save"), attribute.class("text-green-500 hover:text-green-600"), event.on_click(on_save_edit_subtask(subtask.id))], []), element("sl-icon-button", [attribute.name("x"), attribute.attribute("label", "Cancel"), attribute.class("text-gray-400 hover:text-gray-600"), event.on_click(on_cancel_edit_subtask())], [])]) False -> fragment([html.input([attribute.type_("checkbox"), attribute.checked(subtask.completed), event.on_click(on_toggle_subtask(subtask.id)), attribute.class("rounded")]), case subtask.completed { True -> html.span([attribute.class("flex-1 text-gray-500 dark:text-gray-400 line-through cursor-pointer"), event.on_click(on_start_edit_subtask(subtask.id, subtask.text))], [text(subtask.text)]) False -> html.span([attribute.class("flex-1 text-gray-700 dark:text-gray-300 cursor-pointer hover:text-blue-500"), event.on_click(on_start_edit_subtask(subtask.id, subtask.text))], [text(subtask.text)]) }, element("sl-icon-button", [attribute.name("trash"), attribute.attribute("label", "Delete subtask"), attribute.class("text-gray-400 hover:text-red-500"), event.on_click(on_delete_subtask(subtask.id))], [])]) }])) }))]) False -> none() }, html.div([attribute.class("flex gap-2")], [element("sl-input", [attribute.placeholder("Add a subtask..."), attribute.attribute("size", "small"), attribute.class("flex-1 subtask-input"), attribute.value(new_subtask_text), event.on("sl-input", on_subtask_input), event.on("keydown", on_add_subtask_keydown)], [element("sl-icon", [attribute.name("plus-circle"), attribute.attribute("slot", "prefix")], [])]), element("sl-button", [attribute.attribute("size", "small"), attribute.attribute("variant", "default"), event.on_click(on_add_subtask_click())], [text("\n Add\n ")])])]), html.div([attribute.class("flex items-center gap-2 pt-4 border-t border-gray-200 dark:border-gray-700")], [element("sl-button", [attribute.attribute("variant", "primary"), event.on_click(on_edit())], [text("Edit")]), element("sl-button", [attribute.attribute("variant", "danger"), event.on_click(on_delete())], [text("Delete")])])])
+pub fn render(
+  task task: Task,
+  new_subtask_text new_subtask_text: String,
+  editing_subtask_id editing_subtask_id: Option(String),
+  editing_subtask_text editing_subtask_text: String,
+  on_edit on_edit: fn() -> msg,
+  on_delete on_delete: fn() -> msg,
+  on_set_status on_set_status: decode.Decoder(msg),
+  on_set_priority on_set_priority: decode.Decoder(msg),
+  on_toggle_subtask on_toggle_subtask: fn(String) -> msg,
+  on_subtask_input on_subtask_input: decode.Decoder(msg),
+  on_add_subtask_keydown on_add_subtask_keydown: decode.Decoder(msg),
+  on_add_subtask_click on_add_subtask_click: fn() -> msg,
+  on_delete_subtask on_delete_subtask: fn(String) -> msg,
+  on_start_edit_subtask on_start_edit_subtask: fn(String, String) -> msg,
+  on_edit_subtask_input on_edit_subtask_input: decode.Decoder(msg),
+  on_save_edit_subtask on_save_edit_subtask: fn(String) -> msg,
+  on_cancel_edit_subtask on_cancel_edit_subtask: fn() -> msg,
+  on_close on_close: fn() -> msg,
+  project_name project_name: Option(String),
+) -> Element(msg) {
+  html.div(
+    [attribute.class("bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6")],
+    [
+      html.div([attribute.class("flex items-start justify-between mb-4")], [
+        html.div([], [
+          html.h2(
+            [
+              attribute.class(
+                "text-xl font-semibold text-gray-900 dark:text-white",
+              ),
+            ],
+            [text(task.title)],
+          ),
+          html.div([attribute.class("mt-2 flex items-center gap-2")], [
+            element(
+              "sl-select",
+              [
+                attribute.attribute("size", "small"),
+                attribute.value(case task.status {
+                  Todo -> "todo"
+                  InProgress -> "in_progress"
+                  Done -> "done"
+                }),
+                event.on("sl-change", on_set_status),
+              ],
+              [
+                case task.status {
+                  Todo ->
+                    html.span(
+                      [
+                        attribute.attribute("slot", "prefix"),
+                        attribute.class(
+                          "w-2 h-2 rounded-full bg-gray-400 inline-block",
+                        ),
+                      ],
+                      [],
+                    )
+                  InProgress ->
+                    html.span(
+                      [
+                        attribute.attribute("slot", "prefix"),
+                        attribute.class(
+                          "w-2 h-2 rounded-full bg-blue-500 inline-block",
+                        ),
+                      ],
+                      [],
+                    )
+                  Done ->
+                    html.span(
+                      [
+                        attribute.attribute("slot", "prefix"),
+                        attribute.class(
+                          "w-2 h-2 rounded-full bg-green-500 inline-block",
+                        ),
+                      ],
+                      [],
+                    )
+                },
+                element("sl-option", [attribute.value("todo")], [
+                  html.span(
+                    [
+                      attribute.attribute("slot", "prefix"),
+                      attribute.class(
+                        "w-2 h-2 rounded-full bg-gray-400 inline-block",
+                      ),
+                    ],
+                    [],
+                  ),
+                  text("Todo"),
+                ]),
+                element("sl-option", [attribute.value("in_progress")], [
+                  html.span(
+                    [
+                      attribute.attribute("slot", "prefix"),
+                      attribute.class(
+                        "w-2 h-2 rounded-full bg-blue-500 inline-block",
+                      ),
+                    ],
+                    [],
+                  ),
+                  text("In Progress"),
+                ]),
+                element("sl-option", [attribute.value("done")], [
+                  html.span(
+                    [
+                      attribute.attribute("slot", "prefix"),
+                      attribute.class(
+                        "w-2 h-2 rounded-full bg-green-500 inline-block",
+                      ),
+                    ],
+                    [],
+                  ),
+                  text("Done"),
+                ]),
+              ],
+            ),
+            element(
+              "sl-select",
+              [
+                attribute.attribute("size", "small"),
+                attribute.value(case task.priority {
+                  High -> "high"
+                  Medium -> "medium"
+                  Low -> "low"
+                  NoPriority -> "none"
+                }),
+                event.on("sl-change", on_set_priority),
+              ],
+              [
+                case task.priority {
+                  High ->
+                    html.span(
+                      [
+                        attribute.attribute("slot", "prefix"),
+                        attribute.class(
+                          "w-2 h-2 rounded-full bg-red-500 inline-block",
+                        ),
+                      ],
+                      [],
+                    )
+                  Medium ->
+                    html.span(
+                      [
+                        attribute.attribute("slot", "prefix"),
+                        attribute.class(
+                          "w-2 h-2 rounded-full bg-orange-500 inline-block",
+                        ),
+                      ],
+                      [],
+                    )
+                  Low ->
+                    html.span(
+                      [
+                        attribute.attribute("slot", "prefix"),
+                        attribute.class(
+                          "w-2 h-2 rounded-full bg-purple-500 inline-block",
+                        ),
+                      ],
+                      [],
+                    )
+                  NoPriority ->
+                    html.span(
+                      [
+                        attribute.attribute("slot", "prefix"),
+                        attribute.class(
+                          "w-2 h-2 rounded-full bg-slate-400 dark:bg-slate-500 inline-block",
+                        ),
+                      ],
+                      [],
+                    )
+                },
+                element("sl-option", [attribute.value("none")], [
+                  html.span(
+                    [
+                      attribute.attribute("slot", "prefix"),
+                      attribute.class(
+                        "w-2 h-2 rounded-full bg-slate-400 dark:bg-slate-500 inline-block",
+                      ),
+                    ],
+                    [],
+                  ),
+                  text("No Priority"),
+                ]),
+                element("sl-option", [attribute.value("low")], [
+                  html.span(
+                    [
+                      attribute.attribute("slot", "prefix"),
+                      attribute.class(
+                        "w-2 h-2 rounded-full bg-purple-500 inline-block",
+                      ),
+                    ],
+                    [],
+                  ),
+                  text("Low"),
+                ]),
+                element("sl-option", [attribute.value("medium")], [
+                  html.span(
+                    [
+                      attribute.attribute("slot", "prefix"),
+                      attribute.class(
+                        "w-2 h-2 rounded-full bg-orange-500 inline-block",
+                      ),
+                    ],
+                    [],
+                  ),
+                  text("Medium"),
+                ]),
+                element("sl-option", [attribute.value("high")], [
+                  html.span(
+                    [
+                      attribute.attribute("slot", "prefix"),
+                      attribute.class(
+                        "w-2 h-2 rounded-full bg-red-500 inline-block",
+                      ),
+                    ],
+                    [],
+                  ),
+                  text("High"),
+                ]),
+              ],
+            ),
+          ]),
+        ]),
+        html.button(
+          [
+            attribute.class(
+              "text-gray-400 hover:text-gray-600 dark:hover:text-gray-200",
+            ),
+            event.on_click(on_close()),
+          ],
+          [html.span([attribute.class("text-xl")], [text("X")])],
+        ),
+      ]),
+      case project_name {
+        Some(name) ->
+          html.div([attribute.class("mb-4")], [
+            html.h3(
+              [
+                attribute.class(
+                  "text-sm font-medium text-gray-700 dark:text-gray-300 mb-1",
+                ),
+              ],
+              [text("Project")],
+            ),
+            html.p([attribute.class("text-gray-600 dark:text-gray-400")], [
+              text(name),
+            ]),
+          ])
+        None -> html.span([], [])
+      },
+      case task.description != "" {
+        True ->
+          html.div([attribute.class("mb-4")], [
+            html.h3(
+              [
+                attribute.class(
+                  "text-sm font-medium text-gray-700 dark:text-gray-300 mb-1",
+                ),
+              ],
+              [text("Description")],
+            ),
+            html.p([attribute.class("text-gray-600 dark:text-gray-400")], [
+              text(task.description),
+            ]),
+          ])
+        False -> none()
+      },
+      case task.due_date {
+        Some(date) ->
+          html.div([attribute.class("mb-4")], [
+            html.h3(
+              [
+                attribute.class(
+                  "text-sm font-medium text-gray-700 dark:text-gray-300 mb-1",
+                ),
+              ],
+              [text("Due Date")],
+            ),
+            html.p([attribute.class("text-gray-600 dark:text-gray-400")], [
+              text(date),
+            ]),
+          ])
+        None -> html.span([], [])
+      },
+      html.div([attribute.class("mb-4")], [
+        html.h3(
+          [
+            attribute.class(
+              "text-sm font-medium text-gray-700 dark:text-gray-300 mb-2",
+            ),
+          ],
+          [
+            text("Subtasks "),
+            case task.subtasks != [] {
+              True ->
+                fragment([
+                  text("("),
+                  text(int.to_string(completed_subtasks(task))),
+                  text("/"),
+                  text(int.to_string(list.length(task.subtasks))),
+                  text(")"),
+                ])
+              False -> none()
+            },
+          ],
+        ),
+        case task.subtasks != [] {
+          True ->
+            html.ul([attribute.class("space-y-2 mb-3")], [
+              keyed.fragment(
+                list.map(task.subtasks, fn(subtask) {
+                  #(
+                    subtask.id,
+                    html.li([attribute.class("flex items-center gap-2")], [
+                      case editing_subtask_id == Some(subtask.id) {
+                        True ->
+                          fragment([
+                            element(
+                              "sl-input",
+                              [
+                                attribute.attribute("size", "small"),
+                                attribute.class("flex-1"),
+                                attribute.value(editing_subtask_text),
+                                event.on("sl-input", on_edit_subtask_input),
+                                attribute.attribute("autofocus", ""),
+                              ],
+                              [],
+                            ),
+                            element(
+                              "sl-icon-button",
+                              [
+                                attribute.name("check"),
+                                attribute.attribute("label", "Save"),
+                                attribute.class(
+                                  "text-green-500 hover:text-green-600",
+                                ),
+                                event.on_click(on_save_edit_subtask(subtask.id)),
+                              ],
+                              [],
+                            ),
+                            element(
+                              "sl-icon-button",
+                              [
+                                attribute.name("x"),
+                                attribute.attribute("label", "Cancel"),
+                                attribute.class(
+                                  "text-gray-400 hover:text-gray-600",
+                                ),
+                                event.on_click(on_cancel_edit_subtask()),
+                              ],
+                              [],
+                            ),
+                          ])
+                        False ->
+                          fragment([
+                            html.input([
+                              attribute.type_("checkbox"),
+                              attribute.checked(subtask.completed),
+                              event.on_click(on_toggle_subtask(subtask.id)),
+                              attribute.class("rounded"),
+                            ]),
+                            case subtask.completed {
+                              True ->
+                                html.span(
+                                  [
+                                    attribute.class(
+                                      "flex-1 text-gray-500 dark:text-gray-400 line-through cursor-pointer",
+                                    ),
+                                    event.on_click(on_start_edit_subtask(
+                                      subtask.id,
+                                      subtask.text,
+                                    )),
+                                  ],
+                                  [text(subtask.text)],
+                                )
+                              False ->
+                                html.span(
+                                  [
+                                    attribute.class(
+                                      "flex-1 text-gray-700 dark:text-gray-300 cursor-pointer hover:text-blue-500",
+                                    ),
+                                    event.on_click(on_start_edit_subtask(
+                                      subtask.id,
+                                      subtask.text,
+                                    )),
+                                  ],
+                                  [text(subtask.text)],
+                                )
+                            },
+                            element(
+                              "sl-icon-button",
+                              [
+                                attribute.name("trash"),
+                                attribute.attribute("label", "Delete subtask"),
+                                attribute.class(
+                                  "text-gray-400 hover:text-red-500",
+                                ),
+                                event.on_click(on_delete_subtask(subtask.id)),
+                              ],
+                              [],
+                            ),
+                          ])
+                      },
+                    ]),
+                  )
+                }),
+              ),
+            ])
+          False -> none()
+        },
+        html.div([attribute.class("flex gap-2")], [
+          element(
+            "sl-input",
+            [
+              attribute.placeholder("Add a subtask..."),
+              attribute.attribute("size", "small"),
+              attribute.class("flex-1 subtask-input"),
+              attribute.value(new_subtask_text),
+              event.on("sl-input", on_subtask_input),
+              event.on("keydown", on_add_subtask_keydown),
+            ],
+            [
+              element(
+                "sl-icon",
+                [
+                  attribute.name("plus-circle"),
+                  attribute.attribute("slot", "prefix"),
+                ],
+                [],
+              ),
+            ],
+          ),
+          element(
+            "sl-button",
+            [
+              attribute.attribute("size", "small"),
+              attribute.attribute("variant", "default"),
+              event.on_click(on_add_subtask_click()),
+            ],
+            [text("Add")],
+          ),
+        ]),
+      ]),
+      html.div(
+        [
+          attribute.class(
+            "flex items-center gap-2 pt-4 border-t border-gray-200 dark:border-gray-700",
+          ),
+        ],
+        [
+          element(
+            "sl-button",
+            [
+              attribute.attribute("variant", "primary"),
+              event.on_click(on_edit()),
+            ],
+            [text("Edit")],
+          ),
+          element(
+            "sl-button",
+            [
+              attribute.attribute("variant", "danger"),
+              event.on_click(on_delete()),
+            ],
+            [text("Delete")],
+          ),
+        ],
+      ),
+    ],
+  )
 }

@@ -1,12 +1,26 @@
 // @generated from sl_input.ghtml
-// @hash d7df78355ff748a1bd1b3e57bd02a49f5538adf694421e426254c0e0febf7109
+// @hash 2776478a529e24fea7bb269ad9b463d449cfea0b46614ec5d046f2275ed74313
 // DO NOT EDIT - regenerate with: gleam run -m ghtml
 
-import lustre/element.{type Element, element}
-import lustre/attribute
-import lustre/event
 import gleam/dynamic/decode
+import lustre/attribute
+import lustre/element.{type Element, element}
+import lustre/event
 
-pub fn render(value: String, label: String, placeholder: String, on_input: decode.Decoder(msg)) -> Element(msg) {
-  element("sl-input", [attribute.value(value), attribute.attribute("label", label), attribute.placeholder(placeholder), event.on("sl-input", on_input)], [])
+pub fn render(
+  value value: String,
+  label label: String,
+  placeholder placeholder: String,
+  on_input on_input: decode.Decoder(msg),
+) -> Element(msg) {
+  element(
+    "sl-input",
+    [
+      attribute.value(value),
+      attribute.attribute("label", label),
+      attribute.placeholder(placeholder),
+      event.on("sl-input", on_input),
+    ],
+    [],
+  )
 }

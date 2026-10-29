@@ -1,11 +1,19 @@
 // @generated from if_without_else.ghtml
-// @hash d448d362a24f775a44cb5e9effe5cfc5e1123d739430c3b2e3ab777a991a91a3
+// @hash c884c4522bd1fc3f7f1d6dcbe02b91e4d2bed13c1ffb6a7a4f036e068f274bb6
 // DO NOT EDIT - regenerate with: gleam run -m ghtml
 
-import lustre/element.{type Element, text, none}
-import lustre/element/html
 import lustre/attribute
+import lustre/element.{type Element, none, text}
+import lustre/element/html
 
-pub fn render(show_warning: Bool, message: String) -> Element(msg) {
-  html.div([attribute.class("notification")], [case show_warning { True -> html.p([attribute.class("warning")], [text(message)]) False -> none() }])
+pub fn render(
+  show_warning show_warning: Bool,
+  message message: String,
+) -> Element(msg) {
+  html.div([attribute.class("notification")], [
+    case show_warning {
+      True -> html.p([attribute.class("warning")], [text(message)])
+      False -> none()
+    },
+  ])
 }

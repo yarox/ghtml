@@ -1,14 +1,26 @@
 // @generated from item_list.ghtml
-// @hash c26869765c2c23f7c2503de1439076dd3ff135ff62ffa7179b740b2ca223c612
+// @hash 7bb02c3d65948c6e417ad8db58ba621c7231c03cec6275583b7b847f28a9a577
 // DO NOT EDIT - regenerate with: gleam run -m ghtml
 
-import lustre/element.{type Element, text, fragment}
-import lustre/element/html
-import lustre/attribute
-import gleam/list
 import gleam/int
+import gleam/list
+import lustre/attribute
+import lustre/element.{type Element, fragment, text}
+import lustre/element/html
 import types.{type Item}
 
-pub fn render(items: List(Item)) -> Element(msg) {
-  html.ul([attribute.class("item-list")], [fragment(list.index_map(items, fn(item, index) { html.li([attribute.class("item")], [html.span([attribute.class("index")], [text(int.to_string(index)), text(".")]), html.span([attribute.class("name")], [text(item.name)])]) }))])
+pub fn render(items items: List(Item)) -> Element(msg) {
+  html.ul([attribute.class("item-list")], [
+    fragment(
+      list.index_map(items, fn(item, index) {
+        html.li([attribute.class("item")], [
+          html.span([attribute.class("index")], [
+            text(int.to_string(index)),
+            text("."),
+          ]),
+          html.span([attribute.class("name")], [text(item.name)]),
+        ])
+      }),
+    ),
+  ])
 }

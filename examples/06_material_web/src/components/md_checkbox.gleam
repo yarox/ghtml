@@ -1,11 +1,22 @@
 // @generated from md_checkbox.ghtml
-// @hash 1b69b58744855c81198d4e10be6b68d51eec2d68e0b258f58f24742630f5a6fa
+// @hash bacd2765ab0cf6c6160199565ee1b753d9b1ddc23b02cac077b92d07e67aa240
 // DO NOT EDIT - regenerate with: gleam run -m ghtml
 
-import lustre/element.{type Element, element}
 import lustre/attribute
+import lustre/element.{type Element, element}
 import lustre/event
 
-pub fn render(is_checked: Bool, on_change: fn() -> msg) -> Element(msg) {
-  case is_checked { True -> element("md-checkbox", [attribute.attribute("checked", ""), event.on_click(on_change())], []) False -> element("md-checkbox", [event.on_click(on_change())], []) }
+pub fn render(
+  is_checked is_checked: Bool,
+  on_change on_change: fn() -> msg,
+) -> Element(msg) {
+  case is_checked {
+    True ->
+      element(
+        "md-checkbox",
+        [attribute.attribute("checked", ""), event.on_click(on_change())],
+        [],
+      )
+    False -> element("md-checkbox", [event.on_click(on_change())], [])
+  }
 }
