@@ -61,14 +61,155 @@ pub fn parse(input: String) -> ParseResult(Template) {
       let #(imports, params, body_tokens) = extract_metadata(tokens)
       case build_ast(body_tokens) {
         Error(errors) -> Error(errors)
-        Ok(body) ->
+        Ok(body) -> {
+          let body = normalize_whitespace(body, False)
           case check_raw_html(body, False) {
             [] -> Ok(Template(imports, params, body))
             errors -> Error(errors)
           }
+        }
       }
     }
   }
+}
+
+// === Whitespace ===
+
+/// Elements whose text is kept exactly as written
+const preformatted_elements = ["pre", "textarea"]
+
+/// Apply the whitespace rules (similar to JSX) to a list of sibling nodes:
+/// - text is collapsed: each run of whitespace becomes one space
+/// - whitespace-only text with a newline is removed; without a newline it
+///   becomes one space (a space between two inline elements)
+/// - whitespace at the start and end of the list is removed
+/// Inside <pre> and <textarea> (`preformatted`), text is kept exactly.
+fn normalize_whitespace(nodes: List(Node), preformatted: Bool) -> List(Node) {
+  let nodes = list.map(nodes, normalize_children(_, preformatted))
+  case preformatted {
+    True -> nodes
+    False ->
+      nodes
+      |> list.filter_map(fn(node) {
+        case node {
+          TextNode(content, span) ->
+            case is_blank(content), has_newline(content) {
+              True, True -> Error(Nil)
+              True, False -> Ok(TextNode(" ", span))
+              False, _ -> Ok(TextNode(collapse_whitespace(content), span))
+            }
+          _ -> Ok(node)
+        }
+      })
+      |> trim_edges
+  }
+}
+
+/// Normalize the children of one node
+fn normalize_children(node: Node, preformatted: Bool) -> Node {
+  case node {
+    Element(tag, attrs, children, span) -> {
+      let child_preformatted =
+        preformatted || list.contains(preformatted_elements, tag)
+      Element(
+        tag,
+        attrs,
+        normalize_whitespace(children, child_preformatted),
+        span,
+      )
+    }
+    IfNode(condition, then_branch, else_branch, span) ->
+      IfNode(
+        condition,
+        normalize_whitespace(then_branch, preformatted),
+        normalize_whitespace(else_branch, preformatted),
+        span,
+      )
+    EachNode(..) ->
+      EachNode(..node, body: normalize_whitespace(node.body, preformatted))
+    types.CallNode(..) ->
+      types.CallNode(
+        ..node,
+        body: normalize_whitespace(node.body, preformatted),
+      )
+    CaseNode(expr, branches, span) ->
+      CaseNode(
+        expr,
+        list.map(branches, fn(branch: CaseBranch) {
+          CaseBranch(
+            ..branch,
+            body: normalize_whitespace(branch.body, preformatted),
+          )
+        }),
+        span,
+      )
+    types.Fragment(children, span) ->
+      types.Fragment(normalize_whitespace(children, preformatted), span)
+    TextNode(..) | ExprNode(..) | types.EmbedNode(..) -> node
+  }
+}
+
+/// Remove whitespace at the start of the first node and the end of the last
+fn trim_edges(nodes: List(Node)) -> List(Node) {
+  nodes
+  |> trim_start
+  |> list.reverse
+  |> trim_end
+  |> list.reverse
+}
+
+fn trim_start(nodes: List(Node)) -> List(Node) {
+  case nodes {
+    [TextNode(content, span), ..rest] ->
+      case string.trim_start(content) {
+        "" -> trim_start(rest)
+        trimmed -> [TextNode(trimmed, span), ..rest]
+      }
+    _ -> nodes
+  }
+}
+
+/// `nodes` is reversed: the first node is the last sibling
+fn trim_end(nodes: List(Node)) -> List(Node) {
+  case nodes {
+    [TextNode(content, span), ..rest] ->
+      case string.trim_end(content) {
+        "" -> trim_end(rest)
+        trimmed -> [TextNode(trimmed, span), ..rest]
+      }
+    _ -> nodes
+  }
+}
+
+fn is_blank(text: String) -> Bool {
+  string.trim(text) == ""
+}
+
+fn has_newline(text: String) -> Bool {
+  string.contains(text, "\n") || string.contains(text, "\r")
+}
+
+/// Replace each run of whitespace (spaces, tabs, newlines) with one space
+fn collapse_whitespace(text: String) -> String {
+  text
+  |> string.to_graphemes
+  |> list.fold(#([], False), fn(state, char) {
+    let #(acc, in_space) = state
+    case
+      char == " "
+      || char == "\t"
+      || char == "\n"
+      || char == "\r"
+      || char == "\r\n"
+    {
+      True if in_space -> #(acc, True)
+      True -> #([" ", ..acc], True)
+      False -> #([char, ..acc], False)
+    }
+  })
+  |> fn(state) { state.0 }
+  |> list.reverse
+  |> string.concat
 }
 
 // === Validation ===

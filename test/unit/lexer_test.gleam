@@ -38,7 +38,15 @@ pub fn tokenize_multiple_imports_test() {
 @import(gleam/list)"
   let assert Ok(tokens) = lexer.tokenize(input)
 
-  should.equal(list.length(tokens), 2)
+  // Whitespace between directives is a Text token; the parser drops it
+  let imports =
+    list.filter(tokens, fn(token) {
+      case token {
+        types.Import(..) -> True
+        _ -> False
+      }
+    })
+  should.equal(list.length(imports), 2)
 }
 
 // === Params Directive Tests ===

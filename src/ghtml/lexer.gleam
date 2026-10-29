@@ -106,16 +106,12 @@ fn tokenize_loop(
             Error(_) -> Ok(tokens)
           }
         }
+        // Whitespace-only text is kept: the parser decides what it means
+        // (a space between inline elements, or exact text inside <pre>)
         _ -> {
-          // Skip whitespace-only text tokens
-          case is_whitespace_only(text) {
-            True -> tokenize_loop(remaining, new_pos, tokens)
-            False -> {
-              let span = Span(start: start_pos, end: new_pos)
-              let token = Text(content: text, span: span)
-              tokenize_loop(remaining, new_pos, [token, ..tokens])
-            }
-          }
+          let span = Span(start: start_pos, end: new_pos)
+          let token = Text(content: text, span: span)
+          tokenize_loop(remaining, new_pos, [token, ..tokens])
         }
       }
     }
@@ -1142,12 +1138,6 @@ fn skip_html_comment(
 }
 
 // === Utility Functions ===
-
-fn is_whitespace_only(text: String) -> Bool {
-  text
-  |> string.to_graphemes()
-  |> list.all(fn(c) { c == " " || c == "\t" || c == "\n" || c == "\r" })
-}
 
 fn skip_whitespace(input: String, pos: Position) -> #(String, Position) {
   case string.pop_grapheme(input) {

@@ -1,0 +1,7 @@
+@params(name: String)
+
+<article>
+  <p>Hello, <b>{name}</b> <i>and friends</i>!</p>
+  <pre>line 1
+    indented</pre>
+</article>

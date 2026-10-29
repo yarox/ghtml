@@ -17,6 +17,7 @@ import e2e/lustre/generated/properties
 import e2e/lustre/generated/raw_html
 import e2e/lustre/generated/spread_attributes
 import e2e/lustre/generated/svg_icon
+import e2e/lustre/generated/text_content
 import e2e/lustre/generated/typed_attributes
 import e2e/lustre/generated/types.{Active, Inactive, User}
 import gleam/json
@@ -659,5 +660,26 @@ pub fn call_passes_content_to_named_argument_test() {
 pub fn call_keeps_content_order_test() {
   render_call_page(["ann", "bo"])
   |> string.contains("</section><p class=\"count\">2 users</p></main>")
+  |> should.be_true()
+}
+
+// =============================================================================
+// Text Tests (whitespace, entities)
+// =============================================================================
+
+fn render_text() -> String {
+  text_content.render("Ann")
+  |> element.to_string()
+}
+
+pub fn text_keeps_space_between_inline_elements_test() {
+  render_text()
+  |> string.contains("<p>Hello, <b>Ann</b> <i>and friends</i>!</p>")
+  |> should.be_true()
+}
+
+pub fn text_pre_keeps_whitespace_test() {
+  render_text()
+  |> string.contains("<pre>line 1\n    indented</pre>")
   |> should.be_true()
 }

@@ -576,12 +576,12 @@ fn find_attr_function(name: String) -> Result(String, Nil) {
   })
 }
 
-/// Generate code for a text node with whitespace normalization (inline)
+/// Generate code for a text node (inline). The parser has already applied
+/// the whitespace rules, so the text is used as it is; empty text is skipped.
 fn generate_text_inline(content: String) -> String {
-  let normalized = codegen_utils.normalize_whitespace(content)
-  case codegen_utils.is_blank(normalized) {
-    True -> ""
-    False -> "text(\"" <> codegen_utils.escape_string(normalized) <> "\")"
+  case content {
+    "" -> ""
+    _ -> "text(\"" <> codegen_utils.escape_string(content) <> "\")"
   }
 }
 

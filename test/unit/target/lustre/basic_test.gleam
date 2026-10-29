@@ -92,24 +92,17 @@ pub fn generate_text_with_quotes_test() {
   should.be_true(string.contains(code, "\\\"Hello\\\""))
 }
 
-pub fn generate_whitespace_normalization_test() {
+pub fn generate_text_is_used_as_parsed_test() {
+  // The parser applies the whitespace rules; codegen keeps text as it is
+  // (see whitespace_test.gleam for the rules)
   let template =
     Template(imports: [], params: [], body: [
-      Element(
-        "div",
-        [],
-        [TextNode("  multiple   spaces  ", test_span())],
-        test_span(),
-      ),
+      Element("pre", [], [TextNode("  a   b  ", test_span())], test_span()),
     ])
 
   let code = lustre.generate(template, "test.ghtml", "abc123")
 
-  // Whitespace should be collapsed in text content
-  // The original "multiple   spaces" should become "multiple spaces"
-  should.be_false(string.contains(code, "multiple   spaces"))
-  // Should have the normalized version
-  should.be_true(string.contains(code, "multiple spaces"))
+  should.be_true(string.contains(code, "text(\"  a   b  \")"))
 }
 
 // === Expression Generation Tests ===

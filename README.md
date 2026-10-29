@@ -209,6 +209,8 @@ Web components work too. Tags with hyphens automatically use `element()`.
 
 `{expr}` always inserts text (`expr` must be a `String`).
 
+Whitespace works like JSX: a space between elements on the same line is kept (`<b>a</b> <i>b</i>`), and whitespace that contains a newline is removed. Inside `<pre>` and `<textarea>`, text is kept exactly.
+
 </details>
 
 <details>

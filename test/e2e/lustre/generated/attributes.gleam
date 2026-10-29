@@ -22,7 +22,7 @@ pub fn render(
       event.on_input(on_change),
     ]),
     html.button([attribute.type_("submit"), event.on_click(on_click())], [
-      text("\n Submit\n "),
+      text("Submit"),
     ]),
   ])
 }

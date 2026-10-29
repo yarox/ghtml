@@ -311,7 +311,7 @@ Each example is a standalone Gleam project with its own `gleam.toml` and `justfi
 
 1. **All interpolated values must be `String`** - No automatic type conversion
 2. **Expressions are passed verbatim** - The generator doesn't validate Gleam syntax
-3. **Whitespace is collapsed** - Multiple spaces/newlines become single space
+3. **Whitespace (JSX-like), applied by the parser** - Text runs collapse to one space; whitespace-only text on one line between siblings becomes `" "`; whitespace with a newline and whitespace at list edges is removed; `<pre>`/`<textarea>` content is kept exactly. Codegen emits text as parsed
 4. **`{#each}` is unkeyed by default** - `fragment(list.map(...))`; `{#each xs as x (key)}` uses `keyed.fragment` with `key` (a `String`). An unused index is prefixed with `_`, and `gleam/int` is imported for index loops only when the template uses `int.`
 5. **Boolean attrs differ by element type** - Standard HTML vs custom elements
 6. **Imports are conditional** - Only include what's actually used
