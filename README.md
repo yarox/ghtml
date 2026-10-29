@@ -306,6 +306,8 @@ A template must start at `<svg>`. To reuse parts of an SVG, pass them as element
 <details>
 <summary><strong>🎯 Attributes & Events</strong></summary>
 
+To name Lustre types in `@params`, write `attribute.Attribute(msg)`, or import the type yourself with `@import(lustre/attribute.{type Attribute})`. ghtml does not import a module twice.
+
 ```html
 <!-- Static attributes -->
 <div class="container" id="main">
@@ -320,6 +322,9 @@ A template must start at `<svg>`. To reuse parts of an SVG, pass them as element
 <!-- style, width, height: plain strings -->
 <div style="color: red" />
 <img width="24" height={size} />
+
+<!-- Spread a List(Attribute(msg)), in source order -->
+<button class="btn" {...extra_attrs}>Go</button>
 
 <!-- Events -->
 <button @click={on_submit}>Submit</button>

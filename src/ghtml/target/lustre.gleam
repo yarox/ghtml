@@ -10,7 +10,7 @@ import ghtml/types.{
   type Attribute, type CaseBranch, type Node, type Template, BooleanAttribute,
   CaseNode, DynamicAttribute, EachNode, Element, EmbedElement, EmbedElements,
   EmbedHtml, EmbedNode, EventAttribute, ExprNode, Fragment, IfNode,
-  StaticAttribute, TextNode,
+  SpreadAttribute, StaticAttribute, TextNode,
 }
 import gleam/list
 import gleam/option.{None, Some}
@@ -64,8 +64,22 @@ pub fn generate(template: Template, source_path: String, hash: String) -> String
 
 /// Generate import statements for the generated module
 fn generate_imports(template: Template) -> String {
-  let needs_attrs = codegen_utils.template_has_attrs(template.body)
-  let needs_events = codegen_utils.template_has_events(template.body)
+  // lustre/attribute and lustre/event are imported when generated code uses
+  // them, or when the template refers to them (`attribute.Attribute(msg)` in
+  // @params, `attribute.id(x)` in a spread). If the user imports a module
+  // themselves, it is not imported again (that would be a duplicate import).
+  let needs_attrs =
+    {
+      codegen_utils.template_has_attrs(template.body)
+      || template_refers_to(template, "attribute")
+    }
+    && !codegen_utils.has_user_import(template.imports, "lustre/attribute")
+  let needs_events =
+    {
+      codegen_utils.template_has_events(template.body)
+      || template_refers_to(template, "event")
+    }
+    && !codegen_utils.has_user_import(template.imports, "lustre/event")
   let needs_none = codegen_utils.template_needs_none(template.body)
   let needs_fragment = codegen_utils.template_needs_fragment(template.body)
   let needs_each = codegen_utils.template_has_each(template.body)
@@ -136,9 +150,11 @@ fn generate_imports(template: Template) -> String {
     False, False -> base_imports
   }
 
-  // Add list import if needed for each and not already imported by user
+  // Add list import if needed for each or spreads, and not already imported
+  let needs_list =
+    needs_each || codegen_utils.template_has_spread_with_others(template.body)
   let imports = case
-    needs_each && !codegen_utils.has_user_import(user_imports, "gleam/list")
+    needs_list && !codegen_utils.has_user_import(user_imports, "gleam/list")
   {
     True -> imports <> "\nimport gleam/list"
     False -> imports
@@ -202,6 +218,14 @@ fn uses_element_constructor(
       TextNode(..) | ExprNode(..) | EmbedNode(..) -> False
     }
   })
+}
+
+/// Check if the template's parameter types or expressions refer to `module`
+fn template_refers_to(template: Template, module: String) -> Bool {
+  list.any(template.params, fn(param) {
+    codegen_utils.mentions_module(param.1, module)
+  })
+  || codegen_utils.template_uses_module(template.body, module)
 }
 
 /// Check if the template uses `{@html}`
@@ -393,18 +417,40 @@ fn generate_html_element(
   }
 }
 
-/// Generate code for a list of attributes
+/// Generate code for a list of attributes. Spread attributes (`{...xs}`)
+/// are joined with the others in source order using `list.flatten`.
 fn generate_attrs(attrs: List(Attribute), is_custom: Bool) -> String {
-  case list.is_empty(attrs) {
-    True -> "[]"
-    False -> {
-      let attr_strings =
-        attrs
-        |> list.map(fn(attr) { generate_attr(attr, is_custom) })
-        |> string.join(", ")
-      "[" <> attr_strings <> "]"
-    }
+  let segments =
+    list.fold(attrs, [], fn(segments, attr) {
+      case attr, segments {
+        SpreadAttribute(expr), _ -> [Spread(expr), ..segments]
+        _, [Plain(codes), ..rest] -> [
+          Plain([generate_attr(attr, is_custom), ..codes]),
+          ..rest
+        ]
+        _, _ -> [Plain([generate_attr(attr, is_custom)]), ..segments]
+      }
+    })
+    |> list.reverse
+    |> list.map(fn(segment) {
+      case segment {
+        Spread(expr) -> expr
+        Plain(codes) -> "[" <> string.join(list.reverse(codes), ", ") <> "]"
+      }
+    })
+
+  case segments {
+    [] -> "[]"
+    [single] -> single
+    _ -> "list.flatten([" <> string.join(segments, ", ") <> "])"
   }
+}
+
+/// A run of attributes: generated attribute codes (in reverse order) or a
+/// spread expression
+type AttrSegment {
+  Plain(List(String))
+  Spread(String)
 }
 
 /// Generate code for a single attribute
@@ -415,6 +461,8 @@ fn generate_attr(attr: Attribute, is_custom: Bool) -> String {
     EventAttribute(event, handler, modifiers) ->
       generate_event_attr(event, handler, modifiers)
     BooleanAttribute(name) -> generate_boolean_attr(name, is_custom)
+    // Spreads are handled by generate_attrs
+    SpreadAttribute(expr) -> expr
   }
 }
 

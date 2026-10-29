@@ -97,7 +97,7 @@ src/components/user_card.ghtml  →  src/components/user_card.gleam
 All shared types are defined here:
 - **Position/Span** - Source locations for error reporting
 - **Token** - Lexer output (Import, Params, HtmlOpen, IfStart, etc.)
-- **Attribute** - Attribute variants (StaticAttribute, DynamicAttribute, EventAttribute with modifiers: List(String), BooleanAttribute)
+- **Attribute** - Attribute variants (StaticAttribute, DynamicAttribute, EventAttribute with modifiers: List(String), BooleanAttribute, SpreadAttribute for `{...attrs}`)
 - **Node** - AST nodes (Element, TextNode, ExprNode, IfNode, EachNode, CaseNode, Fragment, EmbedNode)
 - **EmbedKind** - What an embed directive inserts (EmbedElement for `{@element}`, EmbedElements for `{@elements}`, EmbedHtml for `{@html}`, which the parser only allows as the only child of an element)
 - **Template** - Final parsed result with imports, params, and body nodes

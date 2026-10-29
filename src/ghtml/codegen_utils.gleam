@@ -6,7 +6,7 @@
 import ghtml/types.{
   type Attribute, type CaseBranch, type Node, BooleanAttribute, CaseNode,
   DynamicAttribute, EachNode, Element, EmbedElements, EmbedNode, EventAttribute,
-  ExprNode, Fragment, IfNode, StaticAttribute, TextNode,
+  ExprNode, Fragment, IfNode, SpreadAttribute, StaticAttribute, TextNode,
 }
 import gleam/list
 import gleam/option.{None, Some}
@@ -194,6 +194,7 @@ fn node_expressions(node: Node) -> List(String) {
         case attr {
           DynamicAttribute(_, expr) -> Ok(expr)
           EventAttribute(_, handler, _) -> Ok(handler)
+          SpreadAttribute(expr) -> Ok(expr)
           _ -> Error(Nil)
         }
       })
@@ -202,7 +203,7 @@ fn node_expressions(node: Node) -> List(String) {
 }
 
 /// True if `expr` contains `module.` not preceded by an identifier character.
-fn mentions_module(expr: String, module: String) -> Bool {
+pub fn mentions_module(expr: String, module: String) -> Bool {
   case string.split(expr, module <> ".") {
     [_] -> False
     [first, ..rest] -> {
@@ -243,7 +244,7 @@ fn has_non_event_attrs(attrs: List(Attribute)) -> Bool {
       StaticAttribute(_, _) -> True
       DynamicAttribute(_, _) -> True
       BooleanAttribute(_) -> True
-      EventAttribute(_, _, _) -> False
+      EventAttribute(_, _, _) | SpreadAttribute(_) -> False
     }
   })
 }
@@ -253,6 +254,24 @@ pub fn template_has_events(nodes: List(Node)) -> Bool {
   any_node(nodes, fn(node) {
     case node {
       Element(_, attrs, _, _) -> has_event_attrs(attrs)
+      _ -> False
+    }
+  })
+}
+
+/// Check if any element spreads an attribute list (needs `gleam/list` when
+/// combined with other attributes)
+pub fn template_has_spread_with_others(nodes: List(Node)) -> Bool {
+  any_node(nodes, fn(node) {
+    case node {
+      Element(_, attrs, _, _) ->
+        list.length(attrs) > 1
+        && list.any(attrs, fn(attr) {
+          case attr {
+            SpreadAttribute(_) -> True
+            _ -> False
+          }
+        })
       _ -> False
     }
   })

@@ -13,11 +13,13 @@ import e2e/lustre/generated/edge_cases
 import e2e/lustre/generated/fragments
 import e2e/lustre/generated/loops
 import e2e/lustre/generated/raw_html
+import e2e/lustre/generated/spread_attributes
 import e2e/lustre/generated/svg_icon
 import e2e/lustre/generated/typed_attributes
 import e2e/lustre/generated/types.{Active, Inactive, User}
 import gleam/string
 import gleeunit/should
+import lustre/attribute
 import lustre/element
 import lustre/element/html
 
@@ -578,4 +580,27 @@ pub fn raw_html_inside_svg_test() {
   render_raw()
   |> string.contains("viewBox=\"0 0 10 10\"><circle r=\"4\"></circle></svg>")
   |> should.be_true()
+}
+
+// =============================================================================
+// Attribute Spread Tests ({...attrs})
+// =============================================================================
+
+pub fn spread_attributes_are_rendered_test() {
+  let html =
+    spread_attributes.render([
+      attribute.id("save"),
+      attribute.attribute("aria-label", "Save"),
+    ])
+    |> element.to_string()
+  should.be_true(string.contains(html, "id=\"save\""))
+  should.be_true(string.contains(html, "aria-label=\"Save\""))
+  should.be_true(string.contains(html, "class=\"btn\""))
+  should.be_true(string.contains(html, "type=\"button\""))
+}
+
+pub fn spread_empty_list_test() {
+  spread_attributes.render([])
+  |> element.to_string()
+  |> should.equal("<button class=\"btn\" type=\"button\">Go</button>")
 }

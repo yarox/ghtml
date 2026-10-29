@@ -8,7 +8,7 @@ import ghtml/types.{
   BooleanAttribute, CaseEnd, CasePattern, CaseStart, DynamicAttribute, EachEnd,
   EachStart, Else, Embed, EmbedElement, EmbedElements, EmbedHtml, EventAttribute,
   Expr, HtmlClose, HtmlOpen, IfEnd, IfStart, Import, Params, ParseError,
-  Position, Span, StaticAttribute, Text,
+  Position, Span, SpreadAttribute, StaticAttribute, Text,
 }
 import gleam/list
 import gleam/option.{type Option, None, Some}
@@ -361,6 +361,24 @@ fn parse_single_attribute(
   pos: Position,
 ) -> Result(#(Attribute, String, Position), ParseError) {
   case input {
+    // Spread: {...attrs}
+    "{..." <> rest -> {
+      let start_pos = pos
+      let pos = advance_pos_str(pos, "{...")
+      case extract_expression(rest, 0, "", pos) {
+        Ok(#(expr, remaining, end_pos)) ->
+          case string.trim(expr) {
+            "" ->
+              Error(ParseError(
+                Span(start: start_pos, end: end_pos),
+                "Expected an expression after {...",
+              ))
+            expr -> Ok(#(SpreadAttribute(expr:), remaining, end_pos))
+          }
+        Error(err) -> Error(err)
+      }
+    }
+
     // Event attribute: @event={handler} or @event.prevent.stop={handler}
     "@" <> rest -> {
       let pos = advance_pos(pos, "@")

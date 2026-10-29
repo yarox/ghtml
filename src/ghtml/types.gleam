@@ -30,6 +30,8 @@ pub type Attribute {
   DynamicAttribute(name: String, expr: String)
   EventAttribute(event: String, handler: String, modifiers: List(String))
   BooleanAttribute(name: String)
+  /// `{...expr}`: `expr` is a `List(Attribute(msg))`
+  SpreadAttribute(expr: String)
 }
 
 /// Token types produced by the tokenizer

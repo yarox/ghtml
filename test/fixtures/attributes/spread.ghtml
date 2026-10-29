@@ -1,0 +1,5 @@
+@import(lustre/attribute.{type Attribute})
+
+@params(extra: List(Attribute(msg)))
+
+<button class="btn" {...extra} type="button">Go</button>
