@@ -668,7 +668,7 @@ pub fn call_keeps_content_order_test() {
 // =============================================================================
 
 fn render_text() -> String {
-  text_content.render("Ann")
+  text_content.render("Ann", ["x", "y"])
   |> element.to_string()
 }
 
@@ -690,5 +690,32 @@ pub fn text_entities_are_rendered_once_test() {
   |> string.contains(
     "<p class=\"legal\" title=\"Q&amp;A\">© 2026 Tom &amp; Jerry</p>",
   )
+  |> should.be_true()
+}
+
+pub fn text_style_is_raw_test() {
+  render_text()
+  |> string.contains("<style>.legal > b { color: red }</style>")
+  |> should.be_true()
+}
+
+pub fn text_script_is_raw_test() {
+  render_text()
+  |> string.contains("<script>if (a < b && c) { go() }</script>")
+  |> should.be_true()
+}
+
+pub fn text_options_render_string_content_test() {
+  render_text()
+  |> without_fragment_markers()
+  |> string.contains(
+    "<select><option value=\"x\">Pick x</option><option value=\"y\">Pick y</option></select>",
+  )
+  |> should.be_true()
+}
+
+pub fn text_textarea_keeps_content_test() {
+  render_text()
+  |> string.contains("<textarea>  keep\n this</textarea>")
   |> should.be_true()
 }

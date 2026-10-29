@@ -97,7 +97,7 @@ fn generate_imports(template: Template) -> String {
     uses_element_constructor(template.body, Html, fn(tag) {
       !codegen_utils.is_custom_element(tag)
     })
-  let needs_text = codegen_utils.template_needs_text(template.body)
+  let needs_text = uses_text_function(template.body, Html)
   let user_imports = template.imports
 
   // Build element import items list
@@ -227,6 +227,67 @@ fn template_refers_to(template: Template, module: String) -> Bool {
     codegen_utils.mentions_module(param.1, module)
   })
   || codegen_utils.template_uses_module(template.body, module)
+}
+
+/// Elements whose Lustre function takes the content as a String
+const string_content_elements = [
+  "style",
+  "script",
+  "title",
+  "option",
+  "textarea",
+]
+
+/// Check if code generation will call `text(...)`: text and expressions,
+/// except inside HTML elements whose content is a String.
+fn uses_text_function(nodes: List(Node), ns: Namespace) -> Bool {
+  list.any(nodes, fn(node) {
+    case node {
+      TextNode(..) | ExprNode(..) -> True
+      Element(tag, _, children, _) ->
+        case ns, tag {
+          Html, _ ->
+            case list.contains(string_content_elements, tag) {
+              True -> False
+              False ->
+                uses_text_function(children, case tag {
+                  "svg" -> Svg
+                  _ -> Html
+                })
+            }
+          Svg, "foreignObject" -> uses_text_function(children, Html)
+          Svg, _ -> uses_text_function(children, Svg)
+        }
+      IfNode(_, then_branch, else_branch, _) ->
+        uses_text_function(then_branch, ns)
+        || uses_text_function(else_branch, ns)
+      EachNode(body: body, ..) | CallNode(body: body, ..) ->
+        uses_text_function(body, ns)
+      CaseNode(_, branches, _) ->
+        list.any(branches, fn(b: CaseBranch) { uses_text_function(b.body, ns) })
+      Fragment(children, _) -> uses_text_function(children, ns)
+      EmbedNode(..) -> False
+    }
+  })
+}
+
+/// The String content of an element such as `<option>`: text parts become
+/// string literals, `{expr}` parts are used as they are, joined with `<>`.
+fn string_content(children: List(Node)) -> String {
+  let parts =
+    list.filter_map(children, fn(child) {
+      case child {
+        TextNode(content, _) ->
+          Ok("\"" <> codegen_utils.escape_string(content) <> "\"")
+        ExprNode(expr, _) -> Ok(expr)
+        // The parser only allows text and expressions here
+        _ -> Error(Nil)
+      }
+    })
+  case parts {
+    [] -> "\"\""
+    _ -> string.join(parts, " <> ")
+  }
 }
 
 /// Check if the template uses `{@html}`
@@ -404,8 +465,16 @@ fn generate_html_element(
     _ -> Html
   }
 
-  case is_custom {
-    True -> {
+  case is_custom, list.contains(string_content_elements, tag) {
+    False, True ->
+      "html."
+      <> tag
+      <> "("
+      <> attrs_code
+      <> ", "
+      <> string_content(children)
+      <> ")"
+    True, _ -> {
       let children_code = generate_children_inline(children, children_ns)
       "element(\""
       <> tag
@@ -415,7 +484,7 @@ fn generate_html_element(
       <> children_code
       <> "])"
     }
-    False -> {
+    False, False -> {
       case is_void {
         // Void elements in Lustre v5 take only 1 argument (attributes)
         True -> "html." <> tag <> "(" <> attrs_code <> ")"

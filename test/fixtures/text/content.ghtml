@@ -1,8 +1,17 @@
-@params(name: String)
+@params(name: String, options: List(String))
 
 <article>
   <p>Hello, <b>{name}</b> <i>and friends</i>!</p>
   <pre>line 1
     indented</pre>
   <p class="legal" title="Q&amp;A">&copy; 2026 Tom &amp; Jerry</p>
+  <style>.legal > b { color: red }</style>
+  <select>
+    {#each options as opt}
+      <option value={opt}>Pick {opt}</option>
+    {/each}
+  </select>
+  <textarea>  keep
+ this</textarea>
+  <script>if (a < b && c) { go() }</script>
 </article>

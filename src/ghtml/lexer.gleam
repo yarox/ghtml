@@ -77,6 +77,23 @@ fn tokenize_loop(
       let start_pos = pos
       let pos = advance_pos(pos, "<")
       case parse_open_tag(rest, start_pos, pos) {
+        // <style> and <script> hold raw text up to their closing tag
+        Ok(#(
+          HtmlOpen(tag:, self_closing: False, ..) as token,
+          remaining,
+          new_pos,
+        ))
+          if tag == "style" || tag == "script"
+        ->
+          case read_raw_text(tag, remaining, new_pos) {
+            Ok(#(text_tokens, remaining, new_pos)) ->
+              tokenize_loop(
+                remaining,
+                new_pos,
+                list.append(text_tokens, [token, ..tokens]),
+              )
+            Error(err) -> Error([err])
+          }
         Ok(#(token, remaining, new_pos)) ->
           tokenize_loop(remaining, new_pos, [token, ..tokens])
         Error(err) -> Error([err])
@@ -115,6 +132,28 @@ fn tokenize_loop(
         }
       }
     }
+  }
+}
+
+/// Read the raw content of `<tag>` up to `</tag>` as one Text token (none
+/// when empty). Returns the tokens and the input from `</tag>` on.
+fn read_raw_text(
+  tag: String,
+  input: String,
+  pos: Position,
+) -> Result(#(List(Token), String, Position), ParseError) {
+  case string.split_once(input, "</" <> tag) {
+    Ok(#("", _)) -> Ok(#([], input, pos))
+    Ok(#(content, after)) -> {
+      let end_pos = advance_pos_str(pos, content)
+      let token = Text(content: content, span: Span(start: pos, end: end_pos))
+      Ok(#([token], "</" <> tag <> after, end_pos))
+    }
+    Error(_) ->
+      Error(ParseError(
+        Span(start: pos, end: pos),
+        "Unclosed <" <> tag <> ">: expected </" <> tag <> ">",
+      ))
   }
 }
 

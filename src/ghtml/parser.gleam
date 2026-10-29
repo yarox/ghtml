@@ -64,7 +64,7 @@ pub fn parse(input: String) -> ParseResult(Template) {
         Error(errors) -> Error(errors)
         Ok(body) -> {
           let body = normalize_whitespace(body, False)
-          case check_raw_html(body, False) {
+          case list.append(check_raw_html(body, False), check_text_only(body)) {
             [] -> Ok(Template(imports, params, body))
             errors -> Error(errors)
           }
@@ -78,6 +78,13 @@ pub fn parse(input: String) -> ParseResult(Template) {
 
 /// Elements whose text is kept exactly as written
 const preformatted_elements = ["pre", "textarea"]
+
+/// Elements whose content is raw text (not decoded, not normalized)
+const raw_text_elements = ["style", "script"]
+
+/// Elements that can only contain text and {expressions} (their Lustre
+/// functions take a String)
+const text_only_elements = ["title", "option", "textarea"]
 
 /// Apply the whitespace rules (similar to JSX) to a list of sibling nodes:
 /// - text is collapsed: each run of whitespace becomes one space
@@ -132,12 +139,11 @@ fn normalize_children(node: Node, preformatted: Bool) -> Node {
             _ -> attr
           }
         })
-      Element(
-        tag,
-        attrs,
-        normalize_whitespace(children, child_preformatted),
-        span,
-      )
+      let children = case list.contains(raw_text_elements, tag) {
+        True -> children
+        False -> normalize_whitespace(children, child_preformatted)
+      }
+      Element(tag, attrs, children, span)
     }
     IfNode(condition, then_branch, else_branch, span) ->
       IfNode(
@@ -234,6 +240,48 @@ fn collapse_whitespace(text: String) -> String {
 }
 
 // === Validation ===
+
+/// `<title>`, `<option>` and `<textarea>` can only contain text and
+/// `{expr}`, because their content becomes a String.
+fn check_text_only(nodes: List(Node)) -> List(ParseError) {
+  list.flat_map(nodes, fn(node) {
+    case node {
+      Element(tag, _, children, span) ->
+        case list.contains(text_only_elements, tag) {
+          True ->
+            case
+              list.all(children, fn(child) {
+                case child {
+                  TextNode(..) | ExprNode(..) -> True
+                  _ -> False
+                }
+              })
+            {
+              True -> []
+              False -> [
+                ParseError(
+                  span,
+                  "<"
+                    <> tag
+                    <> "> can only contain text and {expressions}, because Lustre takes its content as a String",
+                ),
+              ]
+            }
+          False -> check_text_only(children)
+        }
+      IfNode(_, then_branch, else_branch, _) ->
+        list.append(check_text_only(then_branch), check_text_only(else_branch))
+      EachNode(body: body, ..) | types.CallNode(body: body, ..) ->
+        check_text_only(body)
+      CaseNode(_, branches, _) ->
+        list.flat_map(branches, fn(branch: CaseBranch) {
+          check_text_only(branch.body)
+        })
+      types.Fragment(children, _) -> check_text_only(children)
+      TextNode(..) | ExprNode(..) | types.EmbedNode(..) -> []
+    }
+  })
+}
 
 /// `{@html expr}` replaces the content of its parent element, so it must be
 /// the only child of an element. `allowed` is True when `nodes` are the

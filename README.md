@@ -209,7 +209,7 @@ Web components work too. Tags with hyphens automatically use `element()`.
 
 `{expr}` always inserts text (`expr` must be a `String`).
 
-Whitespace works like JSX: a space between elements on the same line is kept (`<b>a</b> <i>b</i>`), and whitespace that contains a newline is removed. Inside `<pre>` and `<textarea>`, text is kept exactly. Character references such as `&amp;`, `&copy;` and `&#169;` are decoded (Lustre escapes the text again when it renders).
+Whitespace works like JSX: a space between elements on the same line is kept (`<b>a</b> <i>b</i>`), and whitespace that contains a newline is removed. Inside `<pre>` and `<textarea>`, text is kept exactly. `<style>` and `<script>` content is raw text (no `{...}`). `<title>`, `<option>` and `<textarea>` can only contain text and `{expr}`, because Lustre takes their content as a `String`. Character references such as `&amp;`, `&copy;` and `&#169;` are decoded (Lustre escapes the text again when it renders).
 
 </details>
 

@@ -74,7 +74,10 @@ pub fn pre_keeps_whitespace_between_children_test() {
 
 pub fn textarea_keeps_whitespace_test() {
   let code = generate("<textarea>  two  spaces\n</textarea>")
-  should.be_true(string.contains(code, "text(\"  two  spaces\\n\")"))
+  should.be_true(string.contains(
+    code,
+    "html.textarea([], \"  two  spaces\\n\")",
+  ))
 }
 
 pub fn whitespace_does_not_break_raw_html_rule_test() {

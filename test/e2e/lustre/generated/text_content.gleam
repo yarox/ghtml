@@ -1,12 +1,13 @@
 // @generated from content.ghtml
-// @hash d0fa6e2440353c266c93ce2646c49211d4ee21f39fda998c865714d39f73d1e3
+// @hash bcdcd0a5eb212a1332280b9f1537eef9d9d74074de97c4aee623d75265eebf06
 // DO NOT EDIT - regenerate with: gleam run -m ghtml
 
+import gleam/list
 import lustre/attribute
-import lustre/element.{type Element, text}
+import lustre/element.{type Element, fragment, text}
 import lustre/element/html
 
-pub fn render(name name: String) -> Element(msg) {
+pub fn render(name name: String, options options: List(String)) -> Element(msg) {
   html.article([], [
     html.p([], [
       text("Hello, "),
@@ -19,5 +20,15 @@ pub fn render(name name: String) -> Element(msg) {
     html.p([attribute.class("legal"), attribute.title("Q&A")], [
       text("© 2026 Tom & Jerry"),
     ]),
+    html.style([], ".legal > b { color: red }"),
+    html.select([], [
+      fragment(
+        list.map(options, fn(opt) {
+          html.option([attribute.value(opt)], "Pick " <> opt)
+        }),
+      ),
+    ]),
+    html.textarea([], "  keep\n this"),
+    html.script([], "if (a < b && c) { go() }"),
   ])
 }
