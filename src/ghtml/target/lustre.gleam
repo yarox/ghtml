@@ -94,6 +94,10 @@ fn generate_imports(template: Template) -> String {
     True -> list.append(element_items, ["none"])
     False -> element_items
   }
+  let element_items = case template_has_svg_children(template.body) {
+    True -> list.append(element_items, ["namespaced"])
+    False -> element_items
+  }
   let element_items = case needs_fragment {
     True -> list.append(element_items, ["fragment"])
     False -> element_items
@@ -152,9 +156,27 @@ fn generate_imports(template: Template) -> String {
   imports
 }
 
+/// Check if any `<svg>` element has element children (they need
+/// `namespaced` from lustre/element)
+fn template_has_svg_children(nodes: List(Node)) -> Bool {
+  codegen_utils.any_node(nodes, fn(node) {
+    case node {
+      Element("svg", _, children, _) ->
+        codegen_utils.any_node(children, fn(child) {
+          case child {
+            Element(..) -> True
+            _ -> False
+          }
+        })
+      _ -> False
+    }
+  })
+}
+
 /// Generate the main render function
 fn generate_function(template: Template) -> String {
   let params = generate_params(template.params)
+  let ns = Html
 
   case list.length(template.body) {
     0 -> "pub fn render(" <> params <> ") -> Element(msg) {\n  fragment([])\n}"
@@ -162,10 +184,11 @@ fn generate_function(template: Template) -> String {
       let body =
         generate_node_inline(
           list.first(template.body)
-          |> result.unwrap(TextNode(
-            "",
-            types.point_span(types.start_position()),
-          )),
+            |> result.unwrap(TextNode(
+              "",
+              types.point_span(types.start_position()),
+            )),
+          ns,
         )
       "pub fn render(" <> params <> ") -> Element(msg) {\n  " <> body <> "\n}"
     }
@@ -174,7 +197,7 @@ fn generate_function(template: Template) -> String {
       let children =
         template.body
         |> list.filter_map(fn(node) {
-          let code = generate_node_inline(node)
+          let code = generate_node_inline(node, ns)
           case string.trim(code) {
             "" -> Error(Nil)
             _ -> Ok("    " <> code)
@@ -198,25 +221,63 @@ fn generate_params(params: List(#(String, String))) -> String {
 }
 
 /// Generate code for a single AST node (inline, no indentation)
-fn generate_node_inline(node: Node) -> String {
+fn generate_node_inline(node: Node, ns: Namespace) -> String {
   case node {
     Element(tag, attrs, children, _) ->
-      generate_element_inline(tag, attrs, children)
+      generate_element_inline(tag, attrs, children, ns)
     TextNode(content, _) -> generate_text_inline(content)
     ExprNode(expr, _) -> "text(" <> expr <> ")"
     IfNode(condition, then_branch, else_branch, _) ->
-      generate_if_node_inline(condition, then_branch, else_branch)
+      generate_if_node_inline(condition, then_branch, else_branch, ns)
     EachNode(collection, item, index, key, body, _) ->
-      generate_each_node_inline(collection, item, index, key, body)
-    CaseNode(expr, branches, _) -> generate_case_node_inline(expr, branches)
-    Fragment(children, _) -> generate_fragment_inline(children)
+      generate_each_node_inline(collection, item, index, key, body, ns)
+    CaseNode(expr, branches, _) -> generate_case_node_inline(expr, branches, ns)
+    Fragment(children, _) -> generate_fragment_inline(children, ns)
     EmbedNode(EmbedElement, expr, _) -> expr
     EmbedNode(EmbedElements, expr, _) -> "fragment(" <> expr <> ")"
   }
 }
 
-/// Generate code for an HTML element (inline format)
+/// The namespace elements are created in. Elements inside `<svg>` are SVG
+/// elements (except inside `<foreignObject>`, which holds HTML again).
+type Namespace {
+  Html
+  Svg
+}
+
+const svg_namespace = "http://www.w3.org/2000/svg"
+
+/// Generate code for an element (inline format)
 fn generate_element_inline(
+  tag: String,
+  attrs: List(Attribute),
+  children: List(Node),
+  ns: Namespace,
+) -> String {
+  case ns {
+    Svg -> {
+      // Lustre's svg module has fixed arities and snake_case names, so the
+      // generic namespaced() keeps tag names (linearGradient) and children.
+      let children_ns = case tag {
+        "foreignObject" -> Html
+        _ -> Svg
+      }
+      "namespaced(\""
+      <> svg_namespace
+      <> "\", \""
+      <> tag
+      <> "\", "
+      <> generate_attrs(attrs, True)
+      <> ", ["
+      <> generate_children_inline(children, children_ns)
+      <> "])"
+    }
+    Html -> generate_html_element(tag, attrs, children)
+  }
+}
+
+/// Generate code for an element in the HTML namespace
+fn generate_html_element(
   tag: String,
   attrs: List(Attribute),
   children: List(Node),
@@ -224,10 +285,15 @@ fn generate_element_inline(
   let is_custom = codegen_utils.is_custom_element(tag)
   let is_void = codegen_utils.is_void_element(tag)
   let attrs_code = generate_attrs(attrs, is_custom)
+  // Children of <svg> are SVG elements
+  let children_ns = case tag {
+    "svg" -> Svg
+    _ -> Html
+  }
 
   case is_custom {
     True -> {
-      let children_code = generate_children_inline(children)
+      let children_code = generate_children_inline(children, children_ns)
       "element(\""
       <> tag
       <> "\", "
@@ -241,7 +307,7 @@ fn generate_element_inline(
         // Void elements in Lustre v5 take only 1 argument (attributes)
         True -> "html." <> tag <> "(" <> attrs_code <> ")"
         False -> {
-          let children_code = generate_children_inline(children)
+          let children_code = generate_children_inline(children, children_ns)
           "html." <> tag <> "(" <> attrs_code <> ", [" <> children_code <> "])"
         }
       }
@@ -381,10 +447,10 @@ fn generate_text_inline(content: String) -> String {
 }
 
 /// Generate code for a list of children nodes (inline, comma-separated)
-fn generate_children_inline(children: List(Node)) -> String {
+fn generate_children_inline(children: List(Node), ns: Namespace) -> String {
   children
   |> list.filter_map(fn(child) {
-    let code = generate_node_inline(child)
+    let code = generate_node_inline(child, ns)
     case string.trim(code) {
       "" -> Error(Nil)
       _ -> Ok(code)
@@ -398,11 +464,12 @@ fn generate_if_node_inline(
   condition: String,
   then_branch: List(Node),
   else_branch: List(Node),
+  ns: Namespace,
 ) -> String {
-  let then_code = generate_branch_content(then_branch)
+  let then_code = generate_branch_content(then_branch, ns)
   let else_code = case else_branch {
     [] -> "none()"
-    _ -> generate_branch_content(else_branch)
+    _ -> generate_branch_content(else_branch, ns)
   }
 
   "case "
@@ -415,12 +482,12 @@ fn generate_if_node_inline(
 }
 
 /// Generate code for branch content (single node or fragment for multiple)
-fn generate_branch_content(nodes: List(Node)) -> String {
+fn generate_branch_content(nodes: List(Node), ns: Namespace) -> String {
   case nodes {
     [] -> "none()"
-    [single] -> generate_node_inline(single)
+    [single] -> generate_node_inline(single, ns)
     multiple -> {
-      let children = generate_children_inline(multiple)
+      let children = generate_children_inline(multiple, ns)
       "fragment([" <> children <> "])"
     }
   }
@@ -435,8 +502,9 @@ fn generate_each_node_inline(
   index: option.Option(String),
   key: option.Option(String),
   body: List(Node),
+  ns: Namespace,
 ) -> String {
-  let body_code = generate_branch_content(body)
+  let body_code = generate_branch_content(body, ns)
 
   let #(map_function, callback_params) = case index {
     None -> #("list.map", item)
@@ -474,11 +542,15 @@ fn generate_each_node_inline(
 }
 
 /// Generate code for a case node
-fn generate_case_node_inline(expr: String, branches: List(CaseBranch)) -> String {
+fn generate_case_node_inline(
+  expr: String,
+  branches: List(CaseBranch),
+  ns: Namespace,
+) -> String {
   let branches_code =
     branches
     |> list.map(fn(branch: CaseBranch) {
-      let body_code = generate_branch_content(branch.body)
+      let body_code = generate_branch_content(branch.body, ns)
       branch.pattern <> " -> " <> body_code
     })
     |> string.join(" ")
@@ -487,7 +559,7 @@ fn generate_case_node_inline(expr: String, branches: List(CaseBranch)) -> String
 }
 
 /// Generate code for a fragment node
-fn generate_fragment_inline(children: List(Node)) -> String {
-  let children_code = generate_children_inline(children)
+fn generate_fragment_inline(children: List(Node), ns: Namespace) -> String {
+  let children_code = generate_children_inline(children, ns)
   "fragment([" <> children_code <> "])"
 }

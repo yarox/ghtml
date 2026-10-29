@@ -1,0 +1,17 @@
+@params(size: String, label: String, radii: List(String))
+
+<svg class="icon" viewBox="0 0 24 24" width={size} height={size}>
+  <defs>
+    <linearGradient id="g">
+      <stop offset="0" />
+    </linearGradient>
+  </defs>
+  <circle cx="12" cy="12" r="10" fill="url(#g)" />
+  {#each radii as r}
+    <circle r={r} />
+  {/each}
+  <text x="2" y="20">{label}</text>
+  <foreignObject width="10" height="10">
+    <p class="note">hi</p>
+  </foreignObject>
+</svg>

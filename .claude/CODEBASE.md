@@ -146,6 +146,7 @@ Lustre-specific code generation:
 - Smart imports: only includes `gleam/list` if `{#each}` is used, etc.
 - Handles attribute mapping (class→attribute.class, @click→event.on_click)
 - Custom elements (tags with `-`) use `element("tag-name", ...)` instead of `html.tag()`
+- Namespaces: generators carry a `Namespace` (Html | Svg). Children of `<svg>` use `namespaced(svg_namespace, tag, ...)`; `<foreignObject>` switches back to Html
 
 ### `src/ghtml/scanner.gleam` - File Discovery
 - `find_lustre_files(root)` - Recursively find `.ghtml` files

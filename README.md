@@ -267,6 +267,29 @@ Insert other elements (another template, a `children` parameter, `element.map(..
 </details>
 
 <details>
+<summary><strong>🖼️ SVG</strong></summary>
+
+Elements inside `<svg>` are created in the SVG namespace. Tag and attribute names keep their case:
+
+```html
+<svg viewBox="0 0 24 24" width={size} height={size}>
+  <defs>
+    <linearGradient id="g"><stop offset="0" /></linearGradient>
+  </defs>
+  {#each points as p (p.id)}
+    <circle cx={p.x} cy={p.y} r="2" />
+  {/each}
+  <foreignObject width="20" height="20">
+    <p>HTML again</p>
+  </foreignObject>
+</svg>
+```
+
+A template must start at `<svg>`. To reuse parts of an SVG, pass them as elements with `{@element}`.
+
+</details>
+
+<details>
 <summary><strong>🎯 Attributes & Events</strong></summary>
 
 ```html

@@ -12,6 +12,7 @@ import e2e/lustre/generated/custom_elements
 import e2e/lustre/generated/edge_cases
 import e2e/lustre/generated/fragments
 import e2e/lustre/generated/loops
+import e2e/lustre/generated/svg_icon
 import e2e/lustre/generated/typed_attributes
 import e2e/lustre/generated/types.{Active, Inactive, User}
 import gleam/string
@@ -509,5 +510,47 @@ pub fn typed_dynamic_boolean_test() {
 pub fn typed_dynamic_style_test() {
   render_typed(False)
   |> string.contains("style=\"margin: 0\"")
+  |> should.be_true()
+}
+
+// =============================================================================
+// SVG Tests
+// =============================================================================
+
+fn render_icon() -> String {
+  svg_icon.render("24", "Hi", ["3", "5"])
+  |> element.to_string()
+  |> without_fragment_markers()
+}
+
+pub fn svg_root_has_svg_namespace_test() {
+  render_icon()
+  |> string.starts_with("<svg xmlns=\"http://www.w3.org/2000/svg\"")
+  |> should.be_true()
+}
+
+pub fn svg_keeps_camel_case_names_test() {
+  let html = render_icon()
+  should.be_true(string.contains(html, "<linearGradient id=\"g\">"))
+  should.be_true(string.contains(html, "viewBox=\"0 0 24 24\""))
+}
+
+pub fn svg_renders_loop_children_test() {
+  render_icon()
+  |> string.contains("<circle r=\"3\"></circle><circle r=\"5\"></circle>")
+  |> should.be_true()
+}
+
+pub fn svg_renders_text_element_test() {
+  render_icon()
+  |> string.contains("<text x=\"2\" y=\"20\">Hi</text>")
+  |> should.be_true()
+}
+
+pub fn svg_foreign_object_holds_html_test() {
+  render_icon()
+  |> string.contains(
+    "<p xmlns=\"http://www.w3.org/1999/xhtml\" class=\"note\">hi</p>",
+  )
   |> should.be_true()
 }

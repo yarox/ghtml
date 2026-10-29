@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Element interpolation: `{@element expr}` inserts an `Element(msg)`, `{@elements expr}` inserts a `List(Element(msg))` (composition, `children` parameters)
 - Keyed loops: `{#each items as item (key)}` and `{#each items as item, i (key)}` use `keyed.fragment` with the given `String` key
+- SVG: elements inside `<svg>` are created in the SVG namespace with `element.namespaced` (tag names such as `linearGradient` keep their case); `<foreignObject>` holds HTML again
 
 ### Fixed
 - `style="..."`, `width="..."` and `height="..."` generated calls that did not compile (`attribute.style` takes two arguments, `attribute.width`/`height` take an `Int`). They now use `attribute.attribute(name, value)`; interpolated values are `String`, as for other attributes
