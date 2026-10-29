@@ -1,5 +1,5 @@
 // @generated from chart.ghtml
-// @hash 3fdc56e93ac64166a39669488bed81efc1b7d80acc0285df10d3afe8f59ea7ec
+// @hash a48ab300f05d082f166eab1f31b905d7f1fadf0f263e8cd1211565dea9bae2c6
 // DO NOT EDIT - regenerate with: gleam run -m ghtml
 
 import gleam/json.{type Json}

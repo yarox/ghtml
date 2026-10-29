@@ -143,7 +143,7 @@ pub fn process_simple_file_test() {
 
   // Read and process
   let assert Ok(content) = simplifile.read(source)
-  let hash = cache.hash_content(content)
+  let hash = cache.source_hash(content)
 
   let assert Ok(template) = parser.parse(content)
   let code = lustre.generate(template, source, hash)
@@ -174,7 +174,7 @@ pub fn cache_skip_unchanged_test() {
 
   // First generation
   let assert Ok(content) = simplifile.read(source)
-  let hash = cache.hash_content(content)
+  let hash = cache.source_hash(content)
   let assert Ok(template) = parser.parse(content)
   let code = lustre.generate(template, source, hash)
   let _ = simplifile.write(output, code)
@@ -194,7 +194,7 @@ pub fn cache_detect_change_test() {
 
   // First generation
   let assert Ok(content) = simplifile.read(source)
-  let hash = cache.hash_content(content)
+  let hash = cache.source_hash(content)
   let assert Ok(template) = parser.parse(content)
   let code = lustre.generate(template, source, hash)
   let _ = simplifile.write(output, code)
@@ -288,7 +288,7 @@ pub fn cleanup_orphans_keeps_files_with_source_test() {
 
   // Generate the file
   let assert Ok(content) = simplifile.read(source)
-  let hash = cache.hash_content(content)
+  let hash = cache.source_hash(content)
   let assert Ok(template) = parser.parse(content)
   let code = lustre.generate(template, source, hash)
   let _ = simplifile.write(output, code)
@@ -370,7 +370,7 @@ pub fn generated_code_has_correct_structure_test() {
 
   // Generate the .gleam file
   let assert Ok(content) = simplifile.read(test_dir <> "/src/template.ghtml")
-  let hash = cache.hash_content(content)
+  let hash = cache.source_hash(content)
   let assert Ok(template) = parser.parse(content)
   let code = lustre.generate(template, "template.ghtml", hash)
   let _ = simplifile.write(test_dir <> "/src/template.gleam", code)

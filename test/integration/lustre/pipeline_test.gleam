@@ -25,13 +25,13 @@ import simplifile
 // === Helper Functions ===
 
 fn generate_from_content(content: String, name: String) -> String {
-  let hash = cache.hash_content(content)
+  let hash = cache.source_hash(content)
   let assert Ok(template) = parser.parse(content)
   lustre.generate(template, name, hash)
 }
 
 fn generate_via_dispatcher(content: String, name: String) -> String {
-  let hash = cache.hash_content(content)
+  let hash = cache.source_hash(content)
   let assert Ok(template) = parser.parse(content)
   codegen.generate(template, name, hash, Lustre)
 }
@@ -168,7 +168,7 @@ pub fn escaped_braces_test() {
 
 pub fn generated_code_has_correct_hash_test() {
   let assert Ok(content) = simplifile.read("test/fixtures/simple/basic.ghtml")
-  let hash = cache.hash_content(content)
+  let hash = cache.source_hash(content)
   let assert Ok(template) = parser.parse(content)
   let code = lustre.generate(template, "basic.ghtml", hash)
 
@@ -189,7 +189,7 @@ pub fn large_template_performance_test() {
   let content = "@params()\n\n<ul>\n" <> items <> "\n</ul>"
 
   // Should parse and generate quickly
-  let hash = cache.hash_content(content)
+  let hash = cache.source_hash(content)
   let assert Ok(template) = parser.parse(content)
   let _code = lustre.generate(template, "large.ghtml", hash)
 
@@ -241,7 +241,7 @@ pub fn full_example_from_plan_test() {
   </sl-button>
 </article>"
 
-  let hash = cache.hash_content(content)
+  let hash = cache.source_hash(content)
   let assert Ok(template) = parser.parse(content)
   let code = lustre.generate(template, "user_card.ghtml", hash)
 
@@ -348,7 +348,7 @@ pub fn dispatcher_preserves_hash_test() {
 
 <div>Hello</div>"
 
-  let hash = cache.hash_content(content)
+  let hash = cache.source_hash(content)
   let assert Ok(template) = parser.parse(content)
   let code = codegen.generate(template, "test.ghtml", hash, Lustre)
 
@@ -372,7 +372,7 @@ pub fn all_fixtures_generate_via_dispatcher_test() {
     let result = parser.parse(content)
     case result {
       Ok(template) -> {
-        let hash = cache.hash_content(content)
+        let hash = cache.source_hash(content)
         let direct = lustre.generate(template, path, hash)
         let via_dispatcher = codegen.generate(template, path, hash, Lustre)
         should.equal(direct, via_dispatcher)

@@ -1,5 +1,5 @@
 // @generated from spread.ghtml
-// @hash 7666f41fb70e3f2bf18ae4aacf289ce7f0c466fffea4a802d64721c233259f3a
+// @hash 3d4104b9693fbd4f8e3d167fff59400553c932cdd459fcc9546af1f2c890607c
 // DO NOT EDIT - regenerate with: gleam run -m ghtml
 
 import gleam/list

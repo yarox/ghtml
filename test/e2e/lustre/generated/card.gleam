@@ -1,5 +1,5 @@
 // @generated from card.ghtml
-// @hash e606cda2f6949c38aad5a82982b34f5f383bbffa8d0d960048ae366981e8b2a0
+// @hash cba5b50c8106d38baefd585c1ee0716ed12c3bfda3060a91da9b22bed5debf67
 // DO NOT EDIT - regenerate with: gleam run -m ghtml
 
 import lustre/attribute

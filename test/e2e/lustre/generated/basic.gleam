@@ -1,5 +1,5 @@
 // @generated from basic.ghtml
-// @hash 2293fbf6dab4f4d49d295fb269d6c2911afcec1ee5463d2c2e5b3679593d4aab
+// @hash d70acdeb4951e811d550efd33b6f43e88d80ff731725525e517fddbf4b0da62b
 // DO NOT EDIT - regenerate with: gleam run -m ghtml
 
 import lustre/attribute

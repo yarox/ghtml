@@ -1,5 +1,5 @@
 // @generated from icon.ghtml
-// @hash 2ca3a356e516fe9a2da0202a07f55ef74fb380ee3b52b3a33713dcb90976d483
+// @hash 6b3dca74a1127e3414f5ffedcf53eb6602f056116037baabcfa76c763d9b8c73
 // DO NOT EDIT - regenerate with: gleam run -m ghtml
 
 import gleam/list

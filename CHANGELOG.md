@@ -22,12 +22,13 @@ All notable changes to this project will be documented in this file.
 - `<title>`, `<option>` and `<textarea>` generated a children list, but their Lustre functions take a `String`; their text and `{expr}` parts are now joined with `<>`. Other content in them is a parse error
 - A parameter or loop/case variable named `text`, `none`, `fragment`, `namespaced` or `unsafe_raw_html` hid the imported function, and the code did not compile. Generated code now calls `element.text(...)` etc. in that case. A name that hides a module the generated code uses (`html`, `attribute`, `event`, `keyed`, `list`, `element`) is now a clear parse error
 - Generated files were written on one line, although the README says they are formatted. The CLI and watch mode now run `gleam format` on the files they write (a failure is reported, not fatal)
+- After an upgrade, existing generated files were not rebuilt, because the cache only hashed the template. The stored hash now also covers the generator's output version (`cache.output_version`), so an upgrade rebuilds files without `force`
 - `style="..."`, `width="..."` and `height="..."` generated calls that did not compile (`attribute.style` takes two arguments, `attribute.width`/`height` take an `Int`). They now use `attribute.attribute(name, value)`; interpolated values are `String`, as for other attributes
 - A boolean attribute with a written value (`disabled="disabled"`) generated `attribute.disabled("disabled")`, which did not compile
 
 ### Changed
 - Generated `render` functions have labelled parameters (`render(title title: String)`), so callers can write `card.render(title: "x")`. Positional calls still work. Names that start with `_` stay unlabelled
-- **Breaking:** `{#each}` without a key is no longer keyed. It generates `fragment(list.map(...))`. Before, it used `item.id` as the key (so lists of strings did not compile), or the index when an index was given. After upgrading, run `gleam run -m ghtml -- force`, because the cache only checks the template content.
+- **Breaking:** `{#each}` without a key is no longer keyed. It generates `fragment(list.map(...))`. Before, it used `item.id` as the key (so lists of strings did not compile), or the index when an index was given. Existing generated files are rebuilt automatically (see the cache fix below).
 - An unused loop index is prefixed with `_`, and `gleam/int` is imported for index loops only when the template uses `int.`, so the generated code has no warnings
 
 ## [0.1.1] - 2026-02-01

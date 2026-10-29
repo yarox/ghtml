@@ -1,5 +1,5 @@
 // @generated from all_attrs.ghtml
-// @hash 976cc101779d78c7cb1ed75f6d637c53914039a81ad85b8fb82ab97bf71eed02
+// @hash cc5f95a5a1339fdd1dfa5e69de050bacf598729dc15d6943c80dbe9adbb52fae
 // DO NOT EDIT - regenerate with: gleam run -m ghtml
 
 import lustre/attribute

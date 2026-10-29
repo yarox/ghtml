@@ -1,5 +1,5 @@
 // @generated from keyed.ghtml
-// @hash cf697959243114b104b1ec5855c13b74c242663968a625b8d767e98ef76b20b4
+// @hash f82b9579b903564d370dbe565f8aca99376de55ac1ad6a76d55d29c875fac1d2
 // DO NOT EDIT - regenerate with: gleam run -m ghtml
 
 import gleam/list

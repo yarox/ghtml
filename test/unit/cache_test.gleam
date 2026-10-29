@@ -143,7 +143,7 @@ pub fn needs_regeneration_matching_hash_test() {
   let output = test_dir <> "/test.gleam"
 
   let source_content = "<div>Hello</div>"
-  let hash = cache.hash_content(source_content)
+  let hash = cache.source_hash(source_content)
   let _ = simplifile.write(source, source_content)
   let _ =
     simplifile.write(
@@ -203,4 +203,35 @@ pub fn needs_regeneration_invalid_output_header_test() {
   // Invalid header, regenerate
 
   let _ = simplifile.delete(test_dir)
+}
+
+pub fn source_hash_includes_output_version_test() {
+  should.not_equal(cache.source_hash("x"), cache.hash_content("x"))
+  should.equal(
+    cache.source_hash("x"),
+    cache.hash_content(cache.output_version <> "\nx"),
+  )
+}
+
+pub fn file_from_older_generator_needs_regeneration_test() {
+  let dir = ".test/cache_version_test"
+  let _ = simplifile.create_directory_all(dir)
+  let source = dir <> "/a.ghtml"
+  let output = dir <> "/a.gleam"
+  let _ = simplifile.write(source, "<p>Hi</p>")
+  // Header written by a generator that hashed only the content
+  let _ =
+    simplifile.write(
+      output,
+      cache.generate_header("a.ghtml", cache.hash_content("<p>Hi</p>")),
+    )
+  should.be_true(cache.needs_regeneration(source, output))
+
+  let _ =
+    simplifile.write(
+      output,
+      cache.generate_header("a.ghtml", cache.source_hash("<p>Hi</p>")),
+    )
+  should.be_false(cache.needs_regeneration(source, output))
+  let _ = simplifile.delete(dir)
 }

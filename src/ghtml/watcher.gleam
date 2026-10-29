@@ -191,7 +191,7 @@ pub fn process_single_file(source_path: String, target: Target) {
 
   case simplifile.read(source_path) {
     Ok(content) -> {
-      let hash = cache.hash_content(content)
+      let hash = cache.source_hash(content)
       case parser.parse(content) {
         Ok(template) -> {
           let gleam_code = codegen.generate(template, source_path, hash, target)

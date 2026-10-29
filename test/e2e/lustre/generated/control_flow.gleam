@@ -1,5 +1,5 @@
 // @generated from full.ghtml
-// @hash a42bb361efde13b6c904f974200e66415b79dbf4767af620895fe247916318f0
+// @hash e198fae57280ee7f235f24d06e404c6266de44d2c2aed0dd933db3f8dab91152
 // DO NOT EDIT - regenerate with: gleam run -m ghtml
 
 import e2e/lustre/generated/types.{

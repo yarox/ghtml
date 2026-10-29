@@ -1,5 +1,5 @@
 // @generated from page.ghtml
-// @hash f5de6666ce180d361272587a86bb19d01fa89c681813a3a9e37bb44415cd6a7b
+// @hash 834a8e8bd1965deec2e250fedb1902acbe29b80903ded5ca1894f962b2db1757
 // DO NOT EDIT - regenerate with: gleam run -m ghtml
 
 import e2e/lustre/generated/card

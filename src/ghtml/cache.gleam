@@ -9,6 +9,17 @@ import gleam/list
 import gleam/string
 import simplifile
 
+/// Version of the generated code. Change it whenever ghtml generates
+/// different code for the same template, so that existing generated files
+/// are rebuilt after an upgrade without `force`.
+pub const output_version = "ghtml-fork-2"
+
+/// The hash stored in a generated file: the template content together with
+/// `output_version`
+pub fn source_hash(content: String) -> String {
+  hash_content(output_version <> "\n" <> content)
+}
+
 /// Calculate SHA-256 hash of content, returning lowercase hex string
 pub fn hash_content(content: String) -> String {
   content
@@ -36,7 +47,7 @@ pub fn extract_hash(generated_content: String) -> Result(String, Nil) {
 pub fn needs_regeneration(source_path: String, output_path: String) -> Bool {
   case simplifile.read(source_path), simplifile.read(output_path) {
     Ok(source), Ok(existing) -> {
-      let current_hash = hash_content(source)
+      let current_hash = source_hash(source)
       case extract_hash(existing) {
         Ok(stored_hash) -> current_hash != stored_hash
         Error(_) -> True

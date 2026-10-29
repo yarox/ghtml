@@ -1,5 +1,5 @@
 // @generated from content.ghtml
-// @hash bcdcd0a5eb212a1332280b9f1537eef9d9d74074de97c4aee623d75265eebf06
+// @hash 72e96e101a0b519ff7ffb45091989e228b3ea7e74d8b0b41e90b5438fe0eddf8
 // DO NOT EDIT - regenerate with: gleam run -m ghtml
 
 import gleam/list

@@ -1,5 +1,5 @@
 // @generated from shadow.ghtml
-// @hash 2401bb7a6d83e7d63ce70f98e85815df30afdb9d8b65ac554e2f1d0dd563ff3f
+// @hash fb42c86fc7d4d59d67ee81e3223a9b4b81c7604cf79c3cafa42cfdcc0a7447c1
 // DO NOT EDIT - regenerate with: gleam run -m ghtml
 
 import lustre/element.{type Element}

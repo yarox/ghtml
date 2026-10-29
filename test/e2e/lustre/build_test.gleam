@@ -48,7 +48,7 @@ fn test_fixture_compiles(fixture_rel_path: String) {
   let assert Ok(template) = parser.parse(content)
 
   let output_path = project_dir <> "/src/" <> name <> ".gleam"
-  let hash = cache.hash_content(content)
+  let hash = cache.source_hash(content)
   let generated = lustre.generate(template, fixture_path, hash)
 
   let assert Ok(Nil) = simplifile.write(output_path, generated)
@@ -101,7 +101,7 @@ pub fn all_fixtures_compile_test() {
 
     let filename = get_filename(fixture_path)
     let output_path = project_dir <> "/src/" <> filename <> ".gleam"
-    let hash = cache.hash_content(content)
+    let hash = cache.source_hash(content)
     let generated = lustre.generate(template, fixture_path, hash)
 
     let assert Ok(Nil) = simplifile.write(output_path, generated)

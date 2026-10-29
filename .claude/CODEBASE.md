@@ -165,6 +165,7 @@ Lustre-specific code generation:
 
 ### `src/ghtml/cache.gleam` - Caching Logic
 - `hash_content(content) -> String` - SHA-256 hex digest
+- `source_hash(content)` - The hash stored in generated files: template content plus `output_version`. **Change `output_version` whenever the generated code changes**, so users' files are rebuilt after an upgrade
 - `needs_regeneration(source, output) -> Bool` - Compare hashes
 - `is_generated(content) -> Bool` - Check for `// @generated` header
 
